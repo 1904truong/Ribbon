@@ -1,0 +1,287 @@
+/* Giao diện Ribbon. Mọi lớp bắt đầu bằng .rb- để khi ghép vào frontend không đụng CSS khác. */
+.rb-root { --rb-font: "Inter", "Segoe UI", system-ui, sans-serif; --rb-tab-h: 28px; --rb-body-h: 72px; --rb-fs: 12px; --rb-fs-tab: 12px; --rb-fs-group: 10px; --rb-icon-big: 17px; --rb-icon-sm: 13px; --rb-btn-w: 50px; --rb-gap: 2px; --rb-blue: #2563eb; --rb-blue-d: #1d4ed8; --rb-blue-l: #eff6ff; --rb-mut: #64748b; --rb-line: #e2e8f0; position: relative; background: #fff; border-bottom: 1px solid var(--rb-line); font: var(--rb-fs)/1.35 var(--rb-font); color: #0f172a; }
+.rb-root button, .rb-root select, .rb-root input { font-family: inherit; }
+
+.rb-tabs { display: flex; align-items: flex-end; gap: 2px; height: var(--rb-tab-h); box-sizing: border-box; padding: 0 10px; border-bottom: 1px solid var(--rb-line); }
+.rb-tab { height: var(--rb-tab-h); padding: 0 10px; font-size: var(--rb-fs-tab); border: 0; background: transparent; border-radius: 6px 6px 0 0; color: #334155; position: relative; cursor: pointer; font: inherit; }
+.rb-tab:hover { background: #f1f5f9; }
+.rb-tab.on { color: var(--rb-blue-d); font-weight: 700; background: var(--rb-blue-l); }
+.rb-tab.on::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2px; background: var(--rb-blue); border-radius: 2px; }
+.rb-tab.ctx { color: #be185d; }
+.rb-tab.ctx.on { background: #fdf2f8; }
+.rb-tab.ctx.on::after { background: #db2777; }
+.rb-tag { font-size: 10px; margin-left: 4px; padding: 0 5px; border-radius: 6px; background: #fce7f3; color: #be185d; }
+.rb-status-toggle { margin-left: auto; padding: 0 6px 6px; font-size: 11px; color: var(--rb-mut); display: inline-flex; align-items: center; gap: 4px; }
+
+.rb-body { display: flex; align-items: stretch; padding: 3px 6px 0; height: var(--rb-body-h); box-sizing: border-box; overflow-x: auto; overflow-y: hidden; }
+.rb-group { display: flex; flex-direction: column; padding: 0 8px; border-right: 1px solid var(--rb-line); }
+.rb-group:last-child { border-right: 0; }
+.rb-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--rb-gap); flex: 1; align-content: center; max-width: 640px; }
+.rb-row.wide { max-width: 760px; }
+.rb-gname { text-align: center; font-size: var(--rb-fs-group); color: var(--rb-mut); padding: 0 0 2px; }
+.rb-group.clipboard { padding-inline: 10px; }
+.rb-group.clipboard .rb-row { gap: 4px; }
+.rb-group.clipboard .rb-btn:not(.big) { width: 32px; min-width: 32px; height: 30px; padding: 0 5px; }
+.rb-group.clipboard .rb-btn:not(.big) .rb-ic { display: inline-flex; align-items: center; justify-content: center; min-width: 17px; }
+.rb-group.clipboard .rb-btn:not(.big) .rb-ic svg { width: 18px; height: 18px; }
+.rb-group.home-large .rb-btn:not(.big) { min-width: 28px; height: 26px; padding: 0 4px; }
+.rb-group.home-large .rb-btn:not(.big) .rb-ic { display: inline-flex; align-items: center; justify-content: center; min-width: 15px; font-size: 13px; }
+.rb-group.home-large .rb-btn:not(.big) .rb-ic svg { width: 16px; height: 16px; }
+.rb-group.home-large .rb-sel, .rb-group.home-large .rb-num { height: 26px; font-size: 12px; }
+.rb-group.home-large .rb-sep { height: 24px; }
+
+/* File là menu dọc kiểu Backstage, các tab còn lại vẫn dùng Ribbon ngang. */
+.rb-file-menu { position: absolute; z-index: 1100; top: var(--rb-tab-h); left: 9px; width: 286px; max-height: calc(100vh - var(--rb-tab-h) - 24px); box-sizing: border-box; overflow: auto; padding: 8px; border: 1px solid var(--rb-line); border-top: 0; border-radius: 0 0 13px 13px; background: #fff; box-shadow: 0 16px 38px rgba(15, 23, 42, .2); }
+.rb-file-group { margin: 0; padding: 5px 3px 8px; }
+.rb-file-group + .rb-file-group { border-top: 1px solid #e2e8f0; }
+.rb-file-group h3 { margin: 0; padding: 2px 9px 5px; color: #94a3b8; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.rb-file-group > div { display: grid; gap: 2px; }
+.rb-file-menu .rb-btn.big { width: 100%; height: 39px; min-width: 0; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 6px 10px; border-radius: 8px; font-size: 12px; text-align: left; }
+.rb-file-menu .rb-btn.big:hover:not(.dis) { background: #eff6ff; color: var(--rb-blue-d); }
+.rb-file-menu .rb-btn.big .rb-ic { width: 24px; height: 24px; flex: 0 0 24px; }
+.rb-file-menu .rb-btn.big .rb-lb { flex: 1; line-height: 1.25; }
+.rb-file-menu .rb-dot { top: 50%; right: 8px; transform: translateY(-50%); }
+
+/* Find / Replace của tab Home. */
+.rb-find-panel { position: fixed; z-index: 1500; top: 118px; right: 18px; width: min(360px, calc(100vw - 24px)); overflow: hidden; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; box-shadow: 0 16px 40px rgba(15, 23, 42, .22); font: 12px/1.4 "Inter", "Segoe UI", system-ui, sans-serif; color: #0f172a; }
+.rb-find-panel > header { display: flex; align-items: center; padding: 7px 8px 0; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+.rb-find-tabs { display: flex; gap: 3px; }
+.rb-find-tabs button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 9px; border: 0; border-radius: 7px 7px 0 0; background: transparent; color: #64748b; cursor: pointer; font: inherit; }
+.rb-find-tabs button.on { background: #fff; color: #1d4ed8; font-weight: 700; box-shadow: 0 -1px 0 #e2e8f0, 1px 0 0 #e2e8f0, -1px 0 0 #e2e8f0; }
+.rb-find-close { display: grid; place-items: center; width: 28px; height: 28px; margin: -3px 0 3px auto; border: 0; border-radius: 7px; background: transparent; color: #64748b; cursor: pointer; }
+.rb-find-close:hover { background: #e2e8f0; color: #0f172a; }
+.rb-find-body { display: grid; gap: 10px; padding: 12px; }
+.rb-find-body > label { display: grid; gap: 4px; color: #475569; font-weight: 600; }
+.rb-find-body input[type="text"], .rb-find-body input:not([type]) { box-sizing: border-box; width: 100%; height: 32px; padding: 0 9px; border: 1px solid #cbd5e1; border-radius: 7px; outline: 0; color: #0f172a; font: inherit; font-weight: 400; }
+.rb-find-body input:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px #dbeafe; }
+.rb-find-input-row { display: grid; grid-template-columns: minmax(0, 1fr) 30px 30px; gap: 3px; }
+.rb-find-input-row button { display: grid; place-items: center; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; color: #475569; cursor: pointer; }
+.rb-find-input-row button:hover { background: #f1f5f9; }
+.rb-find-options { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #64748b; font-size: 11px; }
+.rb-find-options label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.rb-find-options input { accent-color: #2563eb; }
+.rb-find-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.rb-find-actions button { min-height: 31px; padding: 0 11px; border: 1px solid #bfdbfe; border-radius: 7px; background: #eff6ff; color: #1d4ed8; font: inherit; font-weight: 700; cursor: pointer; }
+.rb-find-actions button:last-child { border-color: #2563eb; background: #2563eb; color: #fff; }
+.rb-find-actions button:disabled { opacity: .4; cursor: not-allowed; }
+
+.rb-btn { position: relative; min-width: 23px; height: 21px; padding: 0 5px; border: 1px solid transparent; border-radius: 6px; background: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; cursor: pointer; font: inherit; color: inherit; }
+.rb-btn:hover:not(.dis):not(:disabled) { background: #f1f5f9; }
+.rb-btn.on { background: var(--rb-blue-l); border-color: #bfdbfe; color: var(--rb-blue-d); }
+.rb-btn.big { flex-direction: column; height: 46px; min-width: var(--rb-btn-w); gap: 2px; padding: 3px 5px; font-size: var(--rb-fs); }
+.rb-btn.big .rb-ic { font-size: 15px; line-height: 1; height: var(--rb-icon-big); display: inline-flex; align-items: center; justify-content: center; }
+.rb-btn.big .rb-lb { line-height: 1.2; }
+.rb-ic svg { display: block; }
+.rb-btn.dis, .rb-btn:disabled { opacity: .38; cursor: not-allowed; }
+.rb-ic { font-size: 12px; font-weight: 600; min-width: 14px; text-align: center; }
+.rb-col { display: inline-flex; flex-direction: column; align-items: center; }
+.rb-bar { width: 15px; height: 3px; border-radius: 2px; margin-top: -3px; }
+
+.rb-dot { position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; border-radius: 50%; display: none; }
+.show-status .rb-dot { display: block; }
+.rb-dot.ok { background: #16a34a; } .rb-dot.partial { background: #d97706; } .rb-dot.todo { background: #94a3b8; }
+
+.rb-sep { width: 1px; height: 22px; background: var(--rb-line); margin: 0 4px; }
+.rb-field { display: inline-flex; flex-direction: column; gap: 1px; font-size: var(--rb-fs-group); color: var(--rb-mut); margin: 0 3px; }
+.rb-field.plain { flex-direction: row; margin: 0; }
+.rb-sel, .rb-num { height: 21px; font-size: var(--rb-fs); border: 1px solid var(--rb-line); border-radius: 6px; background: #fff; padding: 0 6px; font: inherit; color: #0f172a; }
+.rb-num { width: 48px; text-align: center; }
+.rb-sel:disabled, .rb-num:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Quick Access Toolbar */
+.rb-qat { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--rb-line); border-radius: 8px; background: #f8fafc; }
+.rb-qat .rb-btn { height: 27px; min-width: 29px; }
+
+/* Panel thả xuống */
+.rb-pop { position: fixed; z-index: 1000; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 10px 30px rgba(15,23,42,.18); padding: 8px; font: 13px "Segoe UI", system-ui, sans-serif; }
+.rb-swatches { display: grid; grid-template-columns: repeat(10, 18px); gap: 3px; }
+.rb-swatches i { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(0,0,0,.12); cursor: pointer; }
+.rb-swatches i:hover { outline: 2px solid #2563eb; }
+.rb-pop-none { display: block; width: 100%; text-align: left; margin-bottom: 6px; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; cursor: pointer; font: inherit; }
+.rb-pop-cap { margin-top: 6px; color: #64748b; text-align: center; }
+.rb-tgrid { display: grid; grid-template-columns: repeat(8, 18px); gap: 2px; }
+.rb-tgrid i { width: 18px; height: 18px; border: 1px solid #94a3b8; border-radius: 2px; cursor: pointer; }
+.rb-tgrid i.on { background: #bfdbfe; border-color: #2563eb; }
+.rb-gallery { display: grid; grid-template-columns: repeat(3, 120px); gap: 8px; }
+.rb-gallery button { border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; padding: 6px; text-align: left; cursor: pointer; font: inherit; }
+.rb-gallery button.on { border-color: #2563eb; background: #eff6ff; }
+.rb-thumb { height: 44px; border-radius: 4px; background: repeating-linear-gradient(#e2e8f0 0 2px, #fff 2px 8px); margin-bottom: 4px; }
+.rb-gallery b { font-size: 11px; font-weight: 600; }
+.rb-menu button { display: block; width: 100%; text-align: left; padding: 5px 10px; border: 0; background: transparent; border-radius: 6px; cursor: pointer; font: inherit; }
+.rb-menu button:hover { background: #f1f5f9; }
+.rb-menu hr { border: 0; border-top: 1px solid #e2e8f0; margin: 4px 0; }
+.rb-wrap { position: relative; } .rb-wrap > .rb-has-sub::after { content: '›'; float: right; margin-left: 18px; }
+.rb-subm { display: none; position: absolute; left: 100%; top: -6px; min-width: 190px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 10px 30px rgba(15,23,42,.18); padding: 6px; z-index: 2; }
+.rb-wrap:hover > .rb-subm { display: block; }
+
+/* Mini toolbar */
+.rb-mini { position: fixed; z-index: 900; display: flex; gap: 2px; padding: 3px; background: #fff; border: 1px solid #e2e8f0; border-radius: 9px; box-shadow: 0 6px 20px rgba(15,23,42,.2); }
+.rb-mini .rb-btn { height: 27px; min-width: 27px; padding: 0 5px; }
+
+.rb-row.nowrap { flex-wrap: nowrap; max-width: none; }
+.rb-chev { opacity: .7; margin-left: 2px; }
+.rb-btn:not(.big) .rb-chev { margin-left: 0; }
+
+.rb-stack { display: inline-flex; flex-direction: column; gap: 4px; justify-content: center; }
+.rb-inline { display: inline-flex; align-items: center; gap: 5px; font-size: var(--rb-fs); color: #0f172a; }
+.rb-inline-lb { min-width: 38px; }
+.rb-inline-box { display: inline-flex; align-items: center; height: 23px; padding: 0 4px 0 6px; border: 1px solid var(--rb-line); border-radius: 6px; background: #fff; }
+.rb-inline-box.dis { opacity: .4; cursor: not-allowed; }
+.rb-inline-box input { width: 38px; border: 0; outline: 0; background: transparent; font: inherit; text-align: right; }
+.rb-unit { color: var(--rb-mut); margin-left: 2px; font-size: var(--rb-fs); }
+
+/* Help Center: portal độc lập, dùng lại được khi ghép Ribbon vào ứng dụng chính. */
+.rb-help-overlay { position: fixed; inset: 0; z-index: 3000; display: grid; place-items: center; padding: 24px; background: rgba(15, 23, 42, .48); backdrop-filter: blur(2px); font: 13px/1.5 "Inter", "Segoe UI", system-ui, sans-serif; color: #0f172a; }
+.rb-help-dialog { width: min(940px, 100%); height: min(680px, calc(100vh - 48px)); display: grid; grid-template-columns: 210px minmax(0, 1fr); overflow: hidden; border: 1px solid rgba(255, 255, 255, .7); border-radius: 18px; background: #fff; box-shadow: 0 28px 80px rgba(15, 23, 42, .3); }
+.rb-help-dialog button, .rb-help-dialog input, .rb-help-dialog textarea { font: inherit; }
+.rb-help-nav { display: flex; flex-direction: column; padding: 18px 12px; background: #f8fafc; border-right: 1px solid #e2e8f0; }
+.rb-help-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 18px; }
+.rb-help-brand > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: linear-gradient(145deg, #2563eb, #4f46e5); color: #fff; font-size: 12px; font-weight: 800; box-shadow: 0 5px 14px rgba(37, 99, 235, .24); }
+.rb-help-brand b, .rb-help-brand small { display: block; }
+.rb-help-brand b { font-size: 13px; }
+.rb-help-brand small { color: #64748b; font-size: 11px; }
+.rb-help-nav nav { display: grid; gap: 4px; }
+.rb-help-nav nav button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 10px; border: 0; border-radius: 9px; background: transparent; color: #475569; text-align: left; cursor: pointer; }
+.rb-help-nav nav button:hover { background: #e2e8f0; color: #0f172a; }
+.rb-help-nav nav button.on { background: #dbeafe; color: #1d4ed8; font-weight: 700; }
+.rb-help-nav > p { margin: auto 7px 0; color: #64748b; font-size: 11px; }
+.rb-help-nav kbd { border: 1px solid #cbd5e1; border-bottom-width: 2px; border-radius: 4px; background: #fff; padding: 0 4px; color: #334155; font-size: 10px; }
+.rb-help-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.rb-help-main > header { display: flex; align-items: center; gap: 11px; min-height: 70px; padding: 10px 20px; border-bottom: 1px solid #e2e8f0; }
+.rb-help-heading-icon { width: 38px; height: 38px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 11px; background: #eff6ff; color: #2563eb; }
+.rb-help-main h2 { margin: 0; font-size: 17px; line-height: 1.25; }
+.rb-help-main header p { margin: 2px 0 0; color: #64748b; font-size: 12px; }
+.rb-help-close { width: 34px; height: 34px; display: grid; flex: 0 0 auto; place-items: center; margin-left: auto; border: 0; border-radius: 9px; background: transparent; color: #64748b; cursor: pointer; }
+.rb-help-close:hover { background: #f1f5f9; color: #0f172a; }
+.rb-help-content { flex: 1; min-height: 0; overflow: auto; padding: 20px; background: #fff; }
+.rb-help-search { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: #64748b; box-shadow: 0 4px 12px rgba(15, 23, 42, .04); }
+.rb-help-search:focus-within { border-color: #60a5fa; box-shadow: 0 0 0 3px #dbeafe; }
+.rb-help-search input { width: 100%; border: 0; outline: 0; color: #0f172a; background: transparent; }
+.rb-help-topic-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.rb-help-topic { padding: 15px 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; }
+.rb-help-topic h3 { margin: 0 0 8px; color: #1e3a8a; font-size: 13px; }
+.rb-help-topic ul, .rb-help-topic ol { margin: 0; padding-left: 19px; color: #475569; }
+.rb-help-topic li + li { margin-top: 5px; }
+.rb-help-empty { padding: 48px 16px; border: 1px dashed #cbd5e1; border-radius: 12px; color: #64748b; text-align: center; }
+.rb-help-lead { margin: 0 0 18px; color: #475569; }
+.rb-help-shortcut-group + .rb-help-shortcut-group { margin-top: 18px; }
+.rb-help-shortcut-group h3 { margin: 0 0 7px; color: #334155; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.rb-help-shortcut-group dl { margin: 0; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 11px; }
+.rb-help-shortcut-group dl > div { display: grid; grid-template-columns: 180px 1fr; align-items: center; min-height: 41px; padding: 5px 12px; background: #fff; }
+.rb-help-shortcut-group dl > div + div { border-top: 1px solid #f1f5f9; }
+.rb-help-shortcut-group dt { display: flex; align-items: center; gap: 4px; }
+.rb-help-shortcut-group dd { margin: 0; color: #475569; }
+.rb-help-shortcut-group kbd { min-width: 24px; padding: 2px 7px; border: 1px solid #cbd5e1; border-bottom-width: 2px; border-radius: 5px; background: #f8fafc; color: #1e293b; font: 600 11px/1.5 "Inter", "Segoe UI", sans-serif; text-align: center; }
+.rb-help-feedback { max-width: 650px; }
+.rb-help-feedback-types { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-bottom: 18px; }
+.rb-help-feedback-types button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 39px; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; color: #475569; cursor: pointer; }
+.rb-help-feedback-types button:hover { background: #f8fafc; }
+.rb-help-feedback-types button.on { border-color: #60a5fa; background: #eff6ff; color: #1d4ed8; font-weight: 700; }
+.rb-help-rating { margin: 0 0 15px; padding: 0; border: 0; }
+.rb-help-rating legend { margin-bottom: 4px; color: #334155; font-weight: 600; }
+.rb-help-rating legend span { color: #94a3b8; font-size: 11px; font-weight: 400; }
+.rb-help-rating div { display: flex; gap: 2px; }
+.rb-help-rating button { padding: 0 3px; border: 0; background: transparent; color: #cbd5e1; font-size: 25px; line-height: 1.2; cursor: pointer; }
+.rb-help-rating button:hover, .rb-help-rating button.on { color: #f59e0b; }
+.rb-help-message { position: relative; display: grid; gap: 6px; color: #334155; font-weight: 600; }
+.rb-help-message textarea { box-sizing: border-box; width: 100%; resize: vertical; padding: 10px 11px 25px; border: 1px solid #cbd5e1; border-radius: 10px; outline: 0; color: #0f172a; line-height: 1.5; font-weight: 400; }
+.rb-help-message textarea:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px #dbeafe; }
+.rb-help-message > span { position: absolute; right: 9px; bottom: 6px; color: #94a3b8; font-size: 10px; font-weight: 400; }
+.rb-help-diagnostics { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; color: #64748b; font-size: 11px; cursor: pointer; }
+.rb-help-diagnostics input { margin-top: 2px; accent-color: #2563eb; }
+.rb-help-error { margin-top: 10px; padding: 7px 10px; border-radius: 7px; background: #fef2f2; color: #b91c1c; font-size: 12px; }
+.rb-help-feedback-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+.rb-help-feedback-actions button, .rb-help-feedback-sent button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; padding: 0 15px; border: 0; border-radius: 9px; background: #2563eb; color: #fff; font-weight: 700; cursor: pointer; }
+.rb-help-feedback-actions button:hover, .rb-help-feedback-sent button:hover { background: #1d4ed8; }
+.rb-help-feedback-actions button:disabled { opacity: .55; cursor: wait; }
+.rb-help-feedback-sent { display: grid; justify-items: center; max-width: 500px; margin: 70px auto 0; color: #475569; text-align: center; }
+.rb-help-feedback-sent > svg { color: #16a34a; }
+.rb-help-feedback-sent h3 { margin: 12px 0 4px; color: #0f172a; font-size: 18px; }
+.rb-help-feedback-sent p { margin: 0 0 18px; }
+
+@media (max-width: 700px) {
+  .rb-help-overlay { padding: 0; }
+  .rb-help-dialog { width: 100%; height: 100%; grid-template-columns: 1fr; border: 0; border-radius: 0; }
+  .rb-help-nav { display: block; padding: 8px 10px; border-right: 0; border-bottom: 1px solid #e2e8f0; }
+  .rb-help-brand, .rb-help-nav > p { display: none; }
+  .rb-help-nav nav { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .rb-help-nav nav button { justify-content: center; }
+  .rb-help-main > header { min-height: 58px; padding: 8px 13px; }
+  .rb-help-heading-icon { display: none; }
+  .rb-help-content { padding: 13px; }
+  .rb-help-topic-list { grid-template-columns: 1fr; }
+  .rb-help-feedback-types { grid-template-columns: repeat(2, 1fr); }
+  .rb-help-shortcut-group dl > div { grid-template-columns: 135px 1fr; }
+}
+
+/* Modal dialogs */
+.rb-modal-backdrop { position: fixed; inset: 0; z-index: 2500; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; padding: 16px; animation: rbFadeIn .18s ease-out; }
+.rb-modal-card { width: 100%; max-width: 490px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.25); overflow: hidden; animation: rbZoomIn .18s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes rbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rbZoomIn { from { opacity: 0; transform: scale(.96) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+.rb-modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 18px 10px; border-bottom: 1px solid #f1f5f9; }
+.rb-modal-title-wrap { display: flex; align-items: center; gap: 10px; }
+.rb-modal-icon-badge { width: 34px; height: 34px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.rb-modal-icon-badge.info { background: #eff6ff; color: #2563eb; }
+.rb-modal-icon-badge.danger { background: #fef2f2; color: #dc2626; }
+.rb-modal-icon-badge.warning { background: #fffbeb; color: #d97706; }
+.rb-modal-title { margin: 0; font-size: 14.5px; font-weight: 700; color: #0f172a; line-height: 1.25; }
+.rb-modal-subtitle { margin: 2px 0 0; font-size: 11.5px; color: #64748b; }
+.rb-modal-close { padding: 4px; border: 0; background: transparent; border-radius: 6px; color: #94a3b8; cursor: pointer; display: flex; }
+.rb-modal-close:hover { background: #f1f5f9; color: #334155; }
+
+.rb-modal-body { padding: 14px 18px; max-height: calc(85vh - 120px); overflow-y: auto; }
+.rb-modal-footer { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: #f8fafc; border-top: 1px solid #f1f5f9; }
+
+.rb-docinfo-grid { display: flex; flex-direction: column; gap: 8px; }
+.rb-docinfo-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f5f9; font-size: 12.5px; }
+.rb-docinfo-lbl { color: #64748b; display: inline-flex; align-items: center; gap: 6px; }
+.rb-docinfo-val { color: #0f172a; font-weight: 500; text-align: right; }
+.rb-docinfo-val.font-semibold { font-weight: 600; color: #1e3a8a; }
+
+.rb-docinfo-row-2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0; background: #f1f5f9; padding: 8px; border-radius: 8px; }
+.rb-docinfo-stat { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.rb-docinfo-stat .stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #64748b; letter-spacing: .3px; }
+.rb-docinfo-stat .stat-value { font-size: 13.5px; font-weight: 700; color: #2563eb; margin-top: 2px; }
+
+.rb-warning-box { display: flex; align-items: flex-start; gap: 8px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #92400e; margin-top: 10px; line-height: 1.45; }
+
+.rb-btn-subtle { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 11px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; font-size: 12px; font-weight: 600; color: #334155; cursor: pointer; }
+.rb-btn-subtle:hover { background: #f1f5f9; border-color: #94a3b8; }
+.rb-btn-primary { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 15px; border: 1px solid #2563eb; border-radius: 7px; background: #2563eb; font-size: 12px; font-weight: 600; color: #fff; cursor: pointer; }
+.rb-btn-primary:hover { background: #1d4ed8; border-color: #1d4ed8; }
+.rb-btn-danger { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 13px; border: 1px solid #dc2626; border-radius: 7px; background: #dc2626; font-size: 12px; font-weight: 600; color: #fff; cursor: pointer; }
+.rb-btn-danger:hover { background: #b91c1c; border-color: #b91c1c; }
+.rb-btn-danger-ghost { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 11px; border: 1px solid #fecaca; border-radius: 7px; background: #fef2f2; font-size: 12px; font-weight: 600; color: #dc2626; cursor: pointer; }
+.rb-btn-danger-ghost:hover { background: #fee2e2; }
+
+/* In và xuất PDF */
+@media print {
+  body { background: #fff !important; }
+  .titlebar, .devbar, .rb-root, .left, .rb-mini, .toast, .rb-pop, .rb-modal-backdrop { display: none !important; }
+  .work { padding: 0 !important; margin: 0 !important; display: block !important; }
+  .stage { background: transparent !important; padding: 0 !important; border: none !important; overflow: visible !important; }
+  .page { box-shadow: none !important; margin: 0 auto !important; width: 100% !important; padding: 10mm 15mm !important; transform: none !important; }
+}
+
+/* Form inputs & Exercise modals */
+.rb-form-row { display: flex; flex-direction: column; gap: 4px; }
+.rb-form-label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: #1e293b; }
+.rb-form-input, .rb-form-select { height: 32px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; font-size: 12.5px; color: #0f172a; outline: none; font-family: inherit; }
+.rb-form-input:focus, .rb-form-select:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15); }
+.rb-form-desc { font-size: 11.5px; color: #64748b; }
+
+.rb-ai-tab { padding: 8px 14px; font-size: 12.5px; font-weight: 600; color: #64748b; background: transparent; border: 0; border-bottom: 2px solid transparent; cursor: pointer; transition: all .15s; }
+.rb-ai-tab:hover { color: #1e293b; }
+.rb-ai-tab.on { color: #2563eb; border-bottom-color: #2563eb; background: #eff6ff; border-radius: 6px 6px 0 0; }
+
+.rb-choice-box { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #fff; transition: all .15s; font-size: 13px; }
+.rb-choice-box:hover { border-color: #93c5fd; background: #f8fafc; }
+.rb-choice-box.active { border-color: #2563eb; background: #eff6ff; }
+.rb-choice-box input { margin-top: 3px; }
+
+/* Interactive Exercise Components */
+.rb-audio-player { display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; margin-bottom: 10px; }
+.rb-audio-btn { width: 28px; height: 28px; border-radius: 50%; background: #16a34a; color: #fff; display: inline-flex; align-items: center; justify-content: center; border: 0; cursor: pointer; }
+.rb-callout-box { background: #fefce8; border-left: 3px solid #eab308; padding: 8px 12px; margin: 8px 0; border-radius: 0 6px 6px 0; font-size: 13px; color: #713f12; }

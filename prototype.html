@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AutoWS Ribbon – bản mẫu giao diện</title>
+<style>
+  :root {
+    --blue: #2563eb; --blue-d: #1d4ed8; --blue-l: #eff6ff; --ink: #0f172a; --mut: #64748b; --line: #e2e8f0;
+    --bg: #f1f5f9; --ok: #16a34a; --part: #d97706; --todo: #94a3b8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 13px/1.35 "Segoe UI", system-ui, sans-serif; color: var(--ink); background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  /* Title bar */
+  .titlebar { display: flex; align-items: center; gap: 12px; padding: 6px 14px; background: #fff; border-bottom: 1px solid var(--line); }
+  .titlebar .back { padding: 5px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-weight: 600; }
+  .titlebar .ttl { line-height: 1.15; } .titlebar .ttl b { font-size: 15px; color: #16295f; } .titlebar .ttl small { display: block; color: var(--mut); }
+  .titlebar .sp { flex: 1; }
+  .badge { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid; }
+  .badge.saved { color: #047857; background: #ecfdf5; border-color: #d1fae5; } .badge.unsaved { color: #b45309; background: #fffbeb; border-color: #fde68a; }
+  .pill { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font-weight: 600; }
+  .pill.pri { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+  /* Dev bar */
+  .devbar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 5px 14px; background: #fefce8; border-bottom: 1px solid #fde68a; font-size: 12px; }
+  .devbar label { display: inline-flex; align-items: center; gap: 6px; color: #713f12; font-weight: 600; }
+  .devbar select { padding: 3px 6px; border: 1px solid #fcd34d; border-radius: 6px; background: #fff; }
+  .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin: 0 4px 0 10px; }
+
+  /* Tabs */
+  .tabs { display: flex; align-items: flex-end; gap: 2px; padding: 4px 12px 0; background: #fff; border-bottom: 1px solid var(--line); }
+  .tab { padding: 6px 14px; border: 0; background: transparent; border-radius: 6px 6px 0 0; color: #334155; position: relative; }
+  .tab:hover { background: #f1f5f9; }
+  .tab.on { color: var(--blue-d); font-weight: 700; background: var(--blue-l); }
+  .tab.on::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2px; background: var(--blue); border-radius: 2px; }
+  .tab.ctx { color: #be185d; } .tab.ctx.on { background: #fdf2f8; color: #be185d; } .tab.ctx.on::after { background: #db2777; }
+  .tab .tag { font-size: 10px; margin-left: 4px; padding: 0 5px; border-radius: 6px; background: #fce7f3; color: #be185d; }
+
+  /* Ribbon body */
+  .ribbon { display: flex; align-items: stretch; gap: 0; padding: 6px 10px 0; background: #fff; border-bottom: 1px solid var(--line); min-height: 98px; overflow-x: auto; }
+  .grp { display: flex; flex-direction: column; padding: 0 8px; border-right: 1px solid var(--line); }
+  .grp:last-child { border-right: 0; }
+  .grp .row { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; flex: 1; align-content: center; max-width: 640px; }
+  .grp .row.wide { max-width: 760px; }
+  .grp .nm { text-align: center; font-size: 11px; color: var(--mut); padding: 3px 0 4px; }
+  .b { position: relative; min-width: 30px; height: 28px; padding: 0 7px; border: 1px solid transparent; border-radius: 6px; background: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; }
+  .b:hover:not(.dis) { background: #f1f5f9; }
+  .b.on { background: var(--blue-l); border-color: #bfdbfe; color: var(--blue-d); }
+  .b.big { flex-direction: column; height: 62px; min-width: 56px; gap: 2px; padding: 4px 6px; font-size: 12px; }
+  .b.big .ic { font-size: 22px; line-height: 1; }
+  .b .ic { font-size: 15px; font-weight: 600; min-width: 14px; text-align: center; }
+  .b.dis { opacity: .38; cursor: not-allowed; }
+  .b .st { position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; border-radius: 50%; display: none; }
+  body.show-st .b .st { display: block; }
+  .st.ok { background: var(--ok); } .st.partial { background: var(--part); } .st.todo { background: var(--todo); }
+  .sel { height: 28px; border: 1px solid var(--line); border-radius: 6px; background: #fff; padding: 0 6px; font: inherit; }
+  .sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+  .col { display: inline-flex; flex-direction: column; align-items: center; }
+  .col .bar { width: 15px; height: 3px; border-radius: 2px; margin-top: -3px; }
+  .num { width: 46px; height: 28px; border: 1px solid var(--line); border-radius: 6px; text-align: center; font: inherit; }
+  .empty { color: var(--mut); padding: 24px 16px; font-style: italic; }
+
+  /* Workspace */
+  .work { flex: 1; min-height: 0; display: flex; gap: 12px; padding: 12px; }
+  .left { width: 32%; min-width: 260px; background: rgba(255,255,255,.6); border: 1px solid var(--line); border-radius: 14px; padding: 12px; overflow: auto; }
+  .left h4 { margin: 0 0 8px; font-size: 13px; } .left .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 10px; color: var(--mut); }
+  .stage { flex: 1; min-width: 0; background: #e2e8f0; border: 1px solid var(--line); border-radius: 14px; overflow: auto; padding: 18px; }
+  .page { width: 210mm; min-height: 297mm; background: #fff; margin: 0 auto; padding: 15mm; box-shadow: 0 8px 30px rgba(15,23,42,.15); transform-origin: top center; }
+  .page h2 { margin: 0 0 8px; font: 800 13pt "Roboto Condensed", Arial Narrow, Arial, sans-serif; color: #1d4ed8; text-transform: uppercase; }
+  .page .wb { border: 1px solid #111; border-radius: 3mm; padding: 2mm 7mm; text-align: center; font-weight: 700; margin: 4mm 0; }
+  .page p { margin: 0 0 3mm; line-height: 1.8; }
+  .page .img { float: right; width: 55mm; height: 40mm; margin: 0 0 3mm 5mm; border: 1px dashed #94a3b8; border-radius: 2mm; display: flex; align-items: center; justify-content: center; color: #94a3b8; cursor: pointer; }
+  .page .img.sel, .page table.sel { outline: 2px solid #db2777; }
+  .page table { border-collapse: collapse; width: 100%; margin: 4mm 0; } .page tr { height: 9mm; } .page td { border: 1px solid #334155; padding: 2mm 3mm; }
+  .page td.tsel { background: #c6c6c6 !important; } .page table.dragging { user-select: none; }
+  .thd { position: fixed; z-index: 8; display: none; width: 15px; height: 15px; border: 1px solid #94a3b8; background: #fff; font-size: 11px; line-height: 13px; text-align: center; color: #334155; cursor: move; }
+  .thd.tsz { width: 11px; height: 11px; cursor: nwse-resize; }
+  [contenteditable]:focus { outline: none; }
+  /* Quick Access Toolbar */
+  .qat { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: #f8fafc; }
+  .qat .b { height: 26px; min-width: 28px; }
+  /* Popover */
+  .pop { position: fixed; z-index: 20; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(15,23,42,.18); padding: 8px; }
+  .pop .sw { display: grid; grid-template-columns: repeat(10, 18px); gap: 3px; }
+  .pop .sw i { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(0,0,0,.12); cursor: pointer; }
+  .pop .sw i:hover { outline: 2px solid var(--blue); }
+  .pop .none { display: block; width: 100%; text-align: left; margin-bottom: 6px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .pop .tg { display: grid; grid-template-columns: repeat(8, 18px); gap: 2px; }
+  .pop .tg i { width: 18px; height: 18px; border: 1px solid #94a3b8; border-radius: 2px; cursor: pointer; }
+  .pop .tg i.on { background: #bfdbfe; border-color: var(--blue); }
+  .pop .cap { margin-top: 6px; color: var(--mut); text-align: center; }
+  .pop .gal { display: grid; grid-template-columns: repeat(3, 120px); gap: 8px; }
+  .pop .gal button { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 6px; text-align: left; }
+  .pop .gal button.on { border-color: var(--blue); background: var(--blue-l); }
+  .pop .gal .th { height: 44px; border-radius: 4px; background: repeating-linear-gradient(#e2e8f0 0 2px, #fff 2px 8px); margin-bottom: 4px; }
+  .pop .gal b { font-size: 11px; font-weight: 600; }
+  .pop .menu button { display: block; width: 100%; text-align: left; padding: 5px 10px; border: 0; background: transparent; border-radius: 6px; }
+  .pop .menu button:hover { background: #f1f5f9; } .pop .menu button:disabled { opacity: .4; }
+  .pop .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+  .pop .wrap { position: relative; } .pop .wrap > button.hs::after { content: '›'; float: right; margin-left: 18px; }
+  .pop .subm { display: none; position: absolute; left: 100%; top: -6px; min-width: 190px; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(15,23,42,.18); padding: 6px; z-index: 2; }
+  .pop .wrap:hover > .subm { display: block; }
+  .pop .tbar { display: flex; gap: 3px; padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+  .pop .tbar button { height: 26px; min-width: 26px; padding: 0 7px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .pop .tbar .wrap > .subm { left: 0; top: 100%; }
+  /* Mini toolbar */
+  .mini { position: fixed; z-index: 15; display: none; gap: 2px; padding: 3px; background: #fff; border: 1px solid var(--line); border-radius: 9px; box-shadow: 0 6px 20px rgba(15,23,42,.2); }
+  .mini .b { height: 26px; min-width: 26px; padding: 0 5px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 8px 16px; border-radius: 10px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 70vw; z-index: 9; }
+  .toast.on { opacity: 1; }
+  .tip { position: fixed; z-index: 10; background: #0f172a; color: #fff; font-size: 12px; padding: 5px 9px; border-radius: 7px; pointer-events: none; max-width: 300px; display: none; }
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <button class="back">← Back to Lesson</button>
+  <div class="ttl"><b>Edit Worksheet</b><small>Unit 2 – London | Worksheet: WS-Demo-1</small></div>
+  <div class="qat" id="qat"></div>
+  <div class="sp"></div>
+  <span id="saveBadge" class="badge saved">✓ Đã lưu</span>
+  <button class="pill">Preview</button>
+  <button class="pill pri" id="saveBtn">Save</button>
+</div>
+
+<div class="devbar">
+  <label>Loại bài <select id="typeSel"></select></label>
+  <label>Giả lập đang chọn
+    <select id="ctxSel"><option value="none">Không chọn gì</option><option value="text">Chữ</option><option value="image">Ảnh</option><option value="table">Bảng</option></select>
+  </label>
+  <label><input type="checkbox" id="stChk" /> Hiện chấm trạng thái</label>
+  <span class="legend"><i style="background:var(--ok)"></i>đã có<i style="background:var(--part)"></i>một phần<i style="background:var(--todo)"></i>chưa có</span>
+  <span style="color:#a16207">Bản mẫu giao diện: nút xám = chưa có chức năng, rê chuột xem lý do.</span>
+</div>
+
+<div class="tabs" id="tabs"></div>
+<div class="ribbon" id="ribbon"></div>
+
+<div class="work">
+  <div class="left">
+    <h4>Nội dung bài (cột trái)</h4>
+    <div class="card">Vùng này giữ nguyên các mục hiện có của từng loại bài: Exercise Content, Word Bank, Paragraph Editor, Audio &amp; QR, Image Manager…</div>
+    <div class="card" id="typeInfo"></div>
+  </div>
+  <div class="stage"><div class="page" id="page">
+    <h2 contenteditable="true" spellcheck="false">Listen and fill the gaps. Then read aloud</h2>
+    <div class="wb">zebra &nbsp; peas &nbsp; carrots &nbsp; eat &nbsp; hippo &nbsp; bananas</div>
+    <div class="img" id="img">Ảnh (bấm để chọn)</div>
+    <div contenteditable="true" spellcheck="false" id="body">
+      <p>The zebra likes sausages, he doesn't like peas. Some carrots and sausages for the zebra, please.</p>
+      <p>The hippo likes bananas, she doesn't like peas. Some apples and pizza for the hippo, please.</p>
+    </div>
+    <table id="tbl" class="wt"><tr><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td></tr><tr><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td></tr></table>
+  </div></div>
+</div>
+
+<div class="thd" id="tmove" title="Chọn cả bảng">✥</div><div class="thd tsz" id="tsize" title="Kéo để đổi kích thước bảng"></div>
+<div class="mini" id="mini"></div>
+<div class="toast" id="toast"></div>
+<div class="tip" id="tip"></div>
+
+<script>
+/* ═══════════ DỮ LIỆU: 19 loại bài ═══════════ */
+const TYPES = [
+  ['listening_gap_fill','Listening Fill in the Gap','A'], ['listening_multiple_choice','Listening Multiple Choice','B'],
+  ['listening_true_false','Listening True / False','D'], ['listening_matching','Listening Matching','E'],
+  ['listening_table_completion','Listening Table Completion','G'], ['reading_multiple_choice','Reading Multiple Choice','B'],
+  ['reading_short_answer','Reading Short Answer','B'], ['true_false_not_given','True / False / Not Given','D'],
+  ['matching_headings','Matching Headings','E'], ['matching_information','Matching Information','E'],
+  ['matching_vocabulary','Matching Vocabulary','E'], ['matching_pictures','Matching Pictures','F'],
+  ['grammar_vocab_multiple_choice','Grammar & Vocab Multiple Choice','B'], ['pronunciation_multiple_choice','Pronunciation Multiple Choice','B'],
+  ['grammar_vocab_cloze','Grammar & Vocab Cloze','C'], ['gap_filling_word_formation','Gap Filling / Word Formation','A'],
+  ['sentence_rearrangement','Sentence Rearrangement','H'], ['sentence_construction','Sentence Construction','H'],
+  ['sentence_completion','Sentence Completion','A'],
+];
+const GROUP_NAME = { A:'Khung từ + chỗ trống', B:'Trắc nghiệm', C:'Cloze', D:'Đúng / Sai / Không có', E:'Nối chữ', F:'Nối với ảnh', G:'Bảng', H:'Sắp xếp / đặt câu' };
+
+/* Nút riêng của tab Exercise theo nhóm loại bài (mục 3.2 của RIBBON_SPEC.md) */
+const EX = {
+  A: [['Add word','＋W','ok'],['Import words','⇪','ok'],['Insert blank','▭','ok'],['Resequence','↻','ok'],['Show word bank','▣','ok']],
+  B: [['Add question','＋Q','ok'],['Add option','＋O','ok'],['Import','⇪','ok'],['Shuffle options','⇄','ok']],
+  C: [['Insert blank','▭','ok'],['Add question','＋Q','ok'],['Shuffle options','⇄','ok']],
+  D: [['Add statement','＋S','ok']],
+  E: [['Add paragraph','＋P','ok'],['Add idea / word','＋I','ok'],['Add definition / option','＋D','ok'],['Import','⇪','ok'],['Shuffle','⇄','ok']],
+  F: [['Add paragraph','＋P','ok'],['Shuffle images','⇄','ok'],['Auto fit to A4','⤢','ok']],
+  G: [['Insert row','⊞','ok'],['Insert column','⊟','ok'],['Delete row','⊖','ok'],['Delete column','⊖','ok'],['Add question','＋Q','ok']],
+  H: [['Add question','＋Q','ok'],['Import','⇪','ok'],['Shuffle','⇄','ok']],
+};
+/* Cài đặt theo loại bài (mục 16 của RIBBON_SPEC.md): [label, kiểu, giá trị / lựa chọn, trạng thái] */
+const SET = {
+  A: [['Độ dài chỗ trống (mm)','n',28,'ok'],['Kiểu nét chỗ trống','s',['Đứt','Liền'],'todo'],['Nhãn chỗ trống','s',['(a)','(1)','Không nhãn'],'partial'],['Kiểu khung từ','s',['Một hàng','Lưới 3 cột','Hai cột'],'partial'],['Viền khung từ','s',['Có','Không'],'todo'],['Gợi ý (hint)','s',['Hiện','Ẩn'],'ok']],
+  B: [['Kiểu nhãn đáp án','s',['A.','a)','①'],'partial'],['Số cột phương án','s',['1','2','4'],'partial'],['Đáp án bằng hình','s',['Tắt','Bật'],'ok'],['Gạch chân từ […]','s',['Tắt','Bật'],'ok'],['Số câu bắt đầu từ','n',1,'todo']],
+  C: [['Kiểu lựa chọn dưới đoạn','s',['Hàng ngang','Danh sách'],'partial'],['Vị trí ảnh','s',['Trên','Trái','Phải','Dưới'],'ok'],['Độ rộng ảnh (%)','n',40,'ok']],
+  D: [['Cột trả lời','s',['T F NG','True False NG','Ô tròn'],'partial'],['Ảnh minh họa','s',['Hiện','Ẩn'],'ok'],['Cao ảnh (mm)','n',22,'ok']],
+  E: [['Nhãn cột trái','s',['1,2,3','a,b,c','A,B,C'],'partial'],['Khoảng cách hai cột (mm)','n',10,'todo'],['Độ rộng cột (%)','n',50,'todo'],['Khoảng cách dòng (mm)','n',4.5,'ok']],
+  F: [['Số ảnh mỗi hàng','s',['2','3','4'],'partial'],['Cỡ ảnh (mm)','n',40,'todo'],['Caption','s',['Hiện','Ẩn'],'partial'],['Nhãn ảnh (A–F)','s',['Hiện','Ẩn'],'partial']],
+  G: [['Header row','s',['Có','Không'],'todo'],['Số hàng','n',3,'partial'],['Số cột','n',3,'partial'],['Ô là chỗ trống','s',['Không','Có'],'partial']],
+  H: [['Kiểu khối chữ','s',['Khối','Danh sách'],'partial'],['Từ gợi ý trong ngoặc','s',['Hiện','Ẩn'],'ok'],['Dòng viết câu trả lời','s',['Có','Không'],'partial']],
+};
+const SMART_AI = new Set(['true_false_not_given','listening_true_false','listening_table_completion','matching_vocabulary']);
+const HAS_IMAGE = new Set(['grammar_vocab_cloze','listening_table_completion','listening_true_false','true_false_not_given','matching_headings','matching_pictures','listening_gap_fill','reading_multiple_choice']);
+const LISTENING = (t) => t.startsWith('listening_');
+
+/* ═══════════ ĐỊNH NGHĨA NÚT ═══════════
+   b(label, icon, status, opts)  status: ok | partial | todo
+   opts: {cmd, tip, big, color, kind, why} */
+const b = (label, icon, st = 'todo', o = {}) => ({ t: 'b', label, icon, st, ...o });
+const sel = (label, options, st = 'ok', o = {}) => ({ t: 's', label, options, st, ...o });
+const num = (label, value, st = 'ok', o = {}) => ({ t: 'n', label, value, st, ...o });
+const clr = (label, icon, color, st = 'ok', o = {}) => ({ t: 'c', label, icon, color, st, ...o });
+const sep = { t: 'sep' };
+const TODO = 'Chưa có chức năng – nằm trong danh sách việc cần làm (RIBBON_SPEC.md)';
+const NOTEXT = 'Chọn một đoạn chữ trên trang để dùng';
+
+const tabs = (ctx) => ({
+  File: [
+    ['Save', [b('Save','💾','ok',{big:1,cmd:'save',tip:'Save (Ctrl+S)'}), b('Save & Return','↩','ok',{big:1,cmd:'saveReturn'}), b('Save & Add another','＋','ok',{big:1,cmd:'saveAdd'})]],
+    ['Export', [b('Export Word (.docx)','W','ok',{big:1,cmd:'exportDocx'}), b('Print / PDF','🖨','ok',{big:1,cmd:'print',tip:'Print (Ctrl+P)'})]],
+    ['Exercise', [b('Duplicate','⧉','ok',{big:1,cmd:'duplicate'}), b('Delete exercise','🗑','ok',{big:1,cmd:'deleteExercise'}), b('Back to lesson','←','ok',{big:1,cmd:'back'})]],
+    ['Info', [b('Document info','ⓘ','ok',{big:1,cmd:'docInfo'})]],
+  ],
+  Home: [
+    ['Undo', [b('Undo','↶','ok',{cmd:'undo',tip:'Undo (Ctrl+Z)'}), b('Redo','↷','ok',{cmd:'redo',tip:'Redo (Ctrl+Y)'})]],
+    ['Clipboard', [b('Paste','📋','partial',{big:1,cmd:'paste'}), b('Cut','✂','partial',{cmd:'cut'}), b('Copy','⧉','partial',{cmd:'copy'}), b('Format Painter','🖌','todo',{})]],
+    ['Font', [
+      sel('Font family',['Arial','Times New Roman','Quicksand','Roboto','Inter'],'partial',{cmd:'fontName'}), num('Font size',11,'ok',{cmd:'size'}),
+      b('Increase size','A⁺','ok',{cmd:'bigger'}), b('Decrease size','A⁻','ok',{cmd:'smaller'}), sep,
+      b('Bold','B','ok',{cmd:'bold',tip:'Bold (Ctrl+B)',need:'text'}), b('Italic','I','ok',{cmd:'italic',tip:'Italic (Ctrl+I)',need:'text'}),
+      b('Underline','U','ok',{cmd:'underline',tip:'Underline (Ctrl+U)',need:'text'}), b('Strikethrough','S̶','ok',{cmd:'strikeThrough',need:'text'}),
+      b('Subscript','x₂','ok',{cmd:'subscript',need:'text'}), b('Superscript','x²','ok',{cmd:'superscript',need:'text'}), sep,
+      clr('Font color','A','#dc2626','ok',{cmd:'foreColor',need:'text'}), clr('Highlight','🖍','#fde047','ok',{cmd:'hiliteColor',need:'text'}),
+      b('Change case','Aa','todo',{}), b('Clear formatting','⌫','ok',{cmd:'removeFormat',need:'text'}),
+    ]],
+    ['Paragraph', [
+      b('Bullets','•≡','partial',{cmd:'insertUnorderedList'}), b('Numbering','1≡','partial',{cmd:'insertOrderedList'}),
+      b('Decrease indent','⇤','partial',{cmd:'outdent'}), b('Increase indent','⇥','partial',{cmd:'indent'}), sep,
+      b('Align left','⫷','partial',{cmd:'justifyLeft'}), b('Center','≡','partial',{cmd:'justifyCenter'}), b('Align right','⫸','partial',{cmd:'justifyRight'}), b('Justify','☰','todo',{cmd:'justifyFull'}), sep,
+      sel('Line spacing',['1.0','1.15','1.5','2.0','2.5'],'partial',{}), b('Shading','▨','todo',{}), b('Borders','▢','todo',{}),
+    ]],
+    ['Styles', [sel('Style',['Normal','Heading','Subheading','Title','Instruction'],'partial',{wide:1})]],
+    ['Editing', [b('Find','🔍','todo',{}), b('Replace','⇆','todo',{}), b('Select all','☑','partial',{cmd:'selectAll'})]],
+  ],
+  Exercise: ctx.exercise,
+  Insert: [
+    ['Pages', [b('Page break','⤓','partial',{big:1,cmd:'toast'}), b('Blank page','▯','todo',{big:1})]],
+    ['Tables', [b('Table','⊞','ok',{big:1,cmd:'tablegrid'})]],
+    ['Illustrations', [
+      b('Picture (from device)','🖼','ok',{big:1,cmd:'toast',off:!ctx.image,why:'Loại bài này không có ảnh'}),
+      b('AI image','✨','ok',{big:1,cmd:'toast',off:!ctx.image,why:'Loại bài này không có ảnh'}),
+      b('Gallery','🗂','ok',{big:1,cmd:'toast',off:ctx.type!=='matching_pictures',why:'Chỉ dùng cho Matching Pictures'}),
+      b('Shapes','◇','partial',{big:1,cmd:'toast'}),
+    ]],
+    ['Exercise objects', [
+      b('Blank (a)___','▭','ok',{big:1,cmd:'toast',off:!ctx.blank,why:'Loại bài này không có chỗ trống'}),
+      b('QR code','▦','ok',{big:1,cmd:'toast',off:!ctx.qr,why:'Loại bài này không có mã QR'}),
+      b('Audio','🎧','ok',{big:1,cmd:'toast',off:!ctx.audio,why:'Chỉ dùng cho bài Listening'}),
+    ]],
+    ['Header & Footer', [b('Header','▔','partial',{big:1}), b('Footer','▁','partial',{big:1}), b('Page number','#','todo',{big:1})]],
+    ['Text', [b('Text box','🅰','partial',{big:1,cmd:'toast'}), b('Horizontal line','—','partial',{big:1,cmd:'toast'}), b('Link','🔗','todo',{big:1})]],
+    ['Symbols', [b('Symbol','Ω','todo',{big:1})]],
+  ],
+  Design: [
+    ['Document Formatting', [sel('Fonts (cả bài)',['Quicksand','Arial','Times New Roman','Roboto','Inter'],'ok',{}), sel('Paragraph spacing',['1.3','1.5','1.75','2.0','2.1'],'ok',{}), sel('Heading size',['11','12','12.5','13','14','16'],'ok',{}), sel('Body size',['10','10.5','11','12','13','14'],'ok',{}), b('Set as default','★','todo',{})]],
+    ['Page Background', [b('Page borders','▢','todo',{big:1}), b('Watermark','Ⓦ','todo',{big:1}), b('Page color','◐','todo',{big:1})]],
+    ['Branding', [b('Header / footer thương hiệu','🏷','ok',{big:1,cmd:'toast'})]],
+  ],
+  Layout: [
+    ['Template', [b('Layout của loại bài','▤','ok',{big:1,cmd:'layoutgal',tip:'Mở thư viện thumbnail layout của loại bài đang chọn'})]],
+    ['Page Setup', [b('Margins','▥','todo',{big:1}), b('Orientation','⟳','todo',{big:1}), b('Size (A4)','A4','todo',{big:1}), b('Columns','⫴','partial',{big:1,cmd:'toast'}), b('Breaks','⤓','partial',{big:1,cmd:'toast'})]],
+    ['Paragraph', [num('Indent left (mm)',0,'todo',{}), num('Indent right (mm)',0,'todo',{}), num('Spacing before (pt)',0,'todo',{}), num('Spacing after (pt)',8,'todo',{})]],
+    ['Arrange', [b('Position','⌖','todo',{big:1,need:'image'}), b('Wrap text','↯','todo',{big:1,need:'image'}), b('Bring forward','⬒','todo',{big:1,need:'image'}), b('Send backward','⬓','todo',{big:1,need:'image'}), b('Align','⫶','todo',{big:1,need:'image'}), b('Group','▣','todo',{big:1,need:'image'}), b('Selection pane','☷','todo',{big:1})]],
+    ['Show', [b('Tiêu đề bài','T','ok',{cmd:'toast'}), b('Hướng dẫn','i','ok',{cmd:'toast'}), b('Khung từ','▣','ok',{cmd:'toast',off:!ctx.wordbank,why:'Loại bài này không có khung từ'}), b('QR','▦','ok',{cmd:'toast',off:!ctx.qr,why:'Loại bài này không có mã QR'}), b('Đánh số','1.','ok',{cmd:'toast'})]],
+  ],
+  Review: [
+    ['Proofing', [b('Word count','123','todo',{big:1}), b('Spelling & grammar','abc✓','todo',{big:1})]],
+    ['Speech', [b('Read aloud','🔊','partial',{big:1,cmd:'toast'}), b('Generate audio (TTS)','🎙','ok',{big:1,cmd:'toast',off:!ctx.audio,why:'Chỉ dùng cho bài Listening'})]],
+  ],
+  View: [
+    ['Views', [b('Edit mode','✎','ok',{big:1,cmd:'toast'}), b('Preview','👁','ok',{big:1,cmd:'toast'})]],
+    ['Show', [b('Ruler','📏','todo',{}), b('Gridlines / guides','▦','todo',{}), b('Navigation pane','☰','todo',{})]],
+    ['Zoom', [sel('Zoom',['50%','75%','100%','125%','150%'],'ok',{cmd:'zoom',val:'100%'}), b('100%','1:1','ok',{big:1,cmd:'zoom100'}), b('One page','▯','ok',{big:1,cmd:'toast'}), b('Page width','↔','todo',{big:1}), b('Multiple pages','▯▯','todo',{big:1})]],
+  ],
+  Help: [
+    ['Help', [b('Help & Guide','?','ok',{big:1,cmd:'toast'}), b('Keyboard shortcuts','⌨','todo',{big:1}), b('Feedback','☺','todo',{big:1})]],
+  ],
+  'Picture Format': [
+    ['Adjust', [b('Replace picture','⇄','partial',{big:1}), b('Regenerate AI image','✨','ok',{big:1}), b('Remove picture','🗑','ok',{big:1,cmd:'rmimg'})]],
+    ['Size', [num('Width (mm)',55,'todo',{}), num('Height (mm)',40,'todo',{}), b('Lock aspect ratio','🔒','todo',{}), b('Reset ratio','↺','todo',{}), b('Fit to page width','↔','todo',{}), b('Crop','⌗','todo',{})]],
+    ['Arrange', [b('Wrap text','↯','todo',{big:1}), b('Position','⌖','todo',{big:1}), b('Align','⫶','todo',{big:1}), b('Bring forward','⬒','todo',{big:1}), b('Send backward','⬓','todo',{big:1})]],
+    ['Style', [b('Border','▢','todo',{big:1}), b('Shadow','◪','todo',{big:1}), b('Alt text','Alt','todo',{big:1})]],
+  ],
+  'Table Layout': [
+    ['Rows & Columns', [b('Insert above','⇑','ok',{big:1,cmd:'t:insA'}), b('Insert below','⇓','ok',{big:1,cmd:'t:insB'}), b('Insert left','⇐','ok',{big:1,cmd:'t:insL'}), b('Insert right','⇒','ok',{big:1,cmd:'t:insR'}), b('Delete','🗑','ok',{big:1,cmd:'t:del'})]],
+    ['Merge', [b('Merge cells','⧉','ok',{big:1,cmd:'t:merge'}), b('Split cells','⫽','ok',{big:1,cmd:'t:split'})]],
+    ['Cell size', [num('Row height (mm)',tv().rowh,'ok',{cmd:'t:rowh'}), num('Column width (mm)',tv().colw,'ok',{cmd:'t:colw'}), sel('AutoFit',['AutoFit…','Content','Page','Fixed'],'ok',{cmd:'t:autofit'}), b('Distribute rows','☰','ok',{big:1,cmd:'t:distR'}), b('Distribute columns','⫴','ok',{big:1,cmd:'t:distC'})]],
+    ['Alignment', [b('Align cell','▦','ok',{big:1,cmd:'t:align'}), b('Text direction','⟲','ok',{big:1,cmd:'t:dir'})]],
+    ['Table style', [b('Borders','▢','ok',{big:1,cmd:'t:borders'}), b('Shading','▨','ok',{big:1,cmd:'t:shade'}), b('Cell padding','▣','ok',{big:1,cmd:'t:pad'}), b('Header row','▭','ok',{big:1,cmd:'t:header'})]],
+    ['Position', [b('Table left','⫷','ok',{big:1,cmd:'t:left'}), b('Table center','≡','ok',{big:1,cmd:'t:center'}), b('Table right','⫸','ok',{big:1,cmd:'t:right'})]],
+  ],
+});
+
+/* ═══════════ TRẠNG THÁI ═══════════ */
+const S = { tab: 'Home', type: TYPES[0][0], sel: 'none', saved: true };
+const $ = (q) => document.querySelector(q);
+const typeMeta = () => TYPES.find((t) => t[0] === S.type);
+
+function context() {
+  const t = S.type, g = typeMeta()[2];
+  const exercise = [
+    ['Exercise (' + GROUP_NAME[g] + ')', EX[g].map(([l, i, st]) => b(l, i, st, { big: 1, cmd: 'toast' }))],
+    ['Smart tools', [b('Smart Paste','📥','ok',{big:1,cmd:'toast'}), b('Smart AI','✨', SMART_AI.has(t) ? 'ok' : 'todo', { big: 1, cmd: 'toast', off: !SMART_AI.has(t), why: 'Loại bài này chưa có Smart AI' }), b('AI Rewrite','✍','ok',{big:1,cmd:'toast'}), b('Insert exercise','➕','ok',{big:1,cmd:'toast'})]],
+    ['Tiêu đề & hướng dẫn', [b('Exercise title','T','ok',{cmd:'toast'}), b('Instruction','i','ok',{cmd:'toast'}), b('Exercise number','#','ok',{cmd:'toast'})]],
+    ['Cài đặt bài (' + GROUP_NAME[g] + ')', SET[g].map(([l, k, v, st]) => k === 'n' ? num(l, v, st, {lab:1}) : sel(l, v, st, {lab:1}))],
+    ['Worksheet', [b('Move up','↑','ok',{big:1,cmd:'toast'}), b('Move down','↓','ok',{big:1,cmd:'toast'}), b('Page break before','⤓','ok',{big:1,cmd:'toast'}), b('Number badge','①','partial',{big:1,cmd:'toast'})]],
+  ];
+  return {
+    type: t, exercise,
+    image: HAS_IMAGE.has(t), qr: LISTENING(t) || ['A'].includes(g), audio: LISTENING(t),
+    blank: g === 'A' || g === 'C', wordbank: g === 'A' || t === 'matching_vocabulary',
+    tbl: t === 'listening_table_completion' || t === 'listening_gap_fill',
+  };
+}
+
+/* ═══════════ VẼ ═══════════ */
+function visibleTabs() {
+  const base = ['File','Home','Exercise','Insert','Design','Layout','Review','View','Help'];
+  if (S.sel === 'image') base.push('Picture Format');
+  if (S.sel === 'table') base.push('Table Layout');
+  return base;
+}
+function renderTabs() {
+  const el = $('#tabs'); el.innerHTML = '';
+  visibleTabs().forEach((n) => {
+    const ctx = n === 'Picture Format' || n === 'Table Layout';
+    const bt = document.createElement('button');
+    bt.className = 'tab' + (S.tab === n ? ' on' : '') + (ctx ? ' ctx' : '');
+    bt.innerHTML = n + (ctx ? '<span class="tag">ngữ cảnh</span>' : '');
+    bt.onclick = () => { S.tab = n; render(); };
+    el.appendChild(bt);
+  });
+}
+function reason(x) {
+  if (x.off) return x.why || 'Không áp dụng cho loại bài này';
+  if (x.st === 'todo') return TODO;
+  if (x.need === 'text' && S.sel !== 'text') return NOTEXT;
+  if (x.need === 'image' && S.sel !== 'image') return 'Chọn một ảnh trên trang để dùng';
+  return '';
+}
+function mk(x) {
+  if (x.t === 'sep') { const s = document.createElement('span'); s.className = 'sep'; return s; }
+  const why = reason(x), dis = !!why;
+  const tip = dis ? why : (x.tip || x.label);
+  let el;
+  if (x.t === 'b' || x.t === 'c') {
+    el = document.createElement('button');
+    el.className = 'b' + (x.big ? ' big' : '') + (dis ? ' dis' : '');
+    if (x.t === 'c') el.innerHTML = `<span class="col"><span class="ic">${x.icon}</span><span class="bar" style="background:${x.color}"></span></span>`;
+    else el.innerHTML = `<span class="ic">${x.icon}</span>${x.big ? `<span>${x.label}</span>` : ''}`;
+    el.innerHTML += `<span class="st ${x.st}"></span>`;
+    el.onmousedown = (e) => e.preventDefault(); // không cướp vùng chọn
+    el.onclick = () => { if (!dis) run(x, undefined, el); };
+  } else if (x.t === 's') {
+    el = document.createElement('select'); el.className = 'sel'; if (x.wide) el.style.width = '120px';
+    x.options.forEach((o) => { const op = document.createElement('option'); op.textContent = o; el.appendChild(op); });
+    el.disabled = dis; el.style.opacity = dis ? .4 : 1;
+    el.onchange = () => run(x, el.value);
+  } else {
+    el = document.createElement('input'); el.className = 'num'; el.type = 'number'; el.value = x.value; el.disabled = dis; el.style.opacity = dis ? .4 : 1;
+    el.onchange = () => run(x, el.value);
+  }
+  if (x.lab && (x.t === 's' || x.t === 'n')) { const w = document.createElement('label'); w.style.cssText = 'display:inline-flex;flex-direction:column;gap:2px;font-size:11px;color:#64748b;margin:0 3px'; w.append(x.label, el); el.dataset.tip = tip; w.dataset.tip = tip; return w; }
+  el.dataset.tip = tip + (x.st === 'todo' && !dis ? '' : '');
+  el.title = '';
+  return el;
+}
+function renderRibbon() {
+  const c = context();
+  const all = tabs(c);
+  const groups = all[S.tab] || [];
+  const rb = $('#ribbon'); rb.innerHTML = '';
+  if (!groups.length) { rb.innerHTML = '<div class="empty">Tab này trống.</div>'; return; }
+  groups.forEach(([name, items]) => {
+    const g = document.createElement('div'); g.className = 'grp';
+    const row = document.createElement('div'); row.className = 'row' + (items.length > 12 ? ' wide' : '');
+    items.forEach((x) => row.appendChild(mk(x)));
+    g.appendChild(row);
+    const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = name; g.appendChild(nm);
+    rb.appendChild(g);
+  });
+  $('#typeInfo').innerHTML = `<b>${typeMeta()[1]}</b><br>Nhóm Exercise: <b>${GROUP_NAME[typeMeta()[2]]}</b><br>Ảnh: ${c.image ? 'có' : 'không'} · QR: ${c.qr ? 'có' : 'không'} · Audio: ${c.audio ? 'có' : 'không'} · Chỗ trống: ${c.blank ? 'có' : 'không'}`;
+}
+function render() {
+  if (!visibleTabs().includes(S.tab)) S.tab = 'Home';
+  renderTabs(); renderRibbon();
+}
+
+/* ═══════════ HÀNH ĐỘNG (chỉ để cảm nhận giao diện) ═══════════ */
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 1600); }
+function dirty(v) { S.saved = !v; const s = $('#saveBadge'); s.className = 'badge ' + (v ? 'unsaved' : 'saved'); s.textContent = v ? '● Chưa lưu' : '✓ Đã lưu'; }
+function run(x, val, anchor) {
+  const c = x.cmd;
+  if (!c || c === 'toast') { toast('(' + x.label + ') – bản mẫu giao diện, chưa nối chức năng'); return; }
+  if (c === 'save') { dirty(false); toast('✓ Đã lưu bài tập'); return; }
+  if (c === 'saveReturn') { dirty(false); toast('✓ Đã lưu & Đang quay lại bài học: Unit 2 – London...'); return; }
+  if (c === 'saveAdd') {
+    dirty(false);
+    const p = $('#body');
+    const newDiv = document.createElement('div');
+    newDiv.style.marginTop = '14px';
+    newDiv.innerHTML = '<hr style="margin: 10px 0; border: none; border-top: 1px dashed #cbd5e1;"><p><strong>Exercise 2:</strong> Practice new vocabulary.</p>';
+    p.appendChild(newDiv);
+    toast('✓ Đã lưu & Tạo bài tập mới (Exercise 2)');
+    return;
+  }
+  if (c === 'exportDocx') {
+    const content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='utf-8'><title>Worksheet</title><style>@page Section1 { size: 210mm 297mm; margin: 15mm; } div.Section1 { page: Section1; } body { font-family: Arial, sans-serif; font-size: 11pt; }</style></head>
+<body><div class="Section1"><h1 style="text-align:center; color:#1e40af;">UNIT 2 – LONDON | WORKSHEET</h1>
+<p style="text-align:center; color:#64748b;">Lesson 1: Vocabulary & Reading</p>
+<div style="border: 1pt solid #cbd5e1; padding: 8pt; margin: 10pt 0;"><strong>Name:</strong> ______________________ <strong>Class:</strong> _______ <strong>Score:</strong> _____/10</div>
+<h3>EXERCISE 1: LISTEN AND FILL THE GAPS</h3>
+<div style="border: 1pt solid #334155; padding: 6pt; text-align:center; background:#f8fafc; margin-bottom: 8pt;">zebra • peas • carrots • eat • hippo • bananas</div>
+<p>The zebra likes sausages, he doesn't like [_________]. Some [_________] and sausages for the zebra, please.</p>
+<p>The hippo likes [_________], she doesn't like peas. Some apples and pizza for the [_________], please.</p>
+</div></body></html>`;
+    const blob = new Blob(['\ufeff', content], { type: 'application/msword;charset=utf-8' });
+    const u = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = u; a.download = 'Worksheet_Unit2_London.doc';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u);
+    toast('✓ Đã tải file Word (.docx / .doc) thành công!');
+    return;
+  }
+  if (c === 'duplicate') {
+    const p = $('#body');
+    const clone = p.cloneNode(true);
+    clone.id = '';
+    clone.style.borderTop = '1px dashed #3b82f6';
+    clone.style.paddingTop = '8px';
+    clone.style.marginTop = '10px';
+    p.parentNode.insertBefore(clone, p.nextSibling);
+    dirty(true);
+    toast('✓ Đã nhân bản bài tập thành công');
+    return;
+  }
+  if (c === 'deleteExercise') {
+    if (confirm('Bạn có chắc chắn muốn xóa bài tập này không? Thao tác này sẽ xóa nội dung bài tập.')) {
+      $('#body').innerHTML = '<p><em>(Bài tập đã bị xóa. Nhập nội dung mới vào đây...)</em></p>';
+      dirty(true);
+      toast('✓ Đã xóa bài tập');
+    }
+    return;
+  }
+  if (c === 'back') {
+    if (!S.saved && !confirm('Bạn có thay đổi chưa lưu. Bạn có muốn thoát về bài học không?')) return;
+    toast('← Đang quay lại trang bài học: Unit 2 – London');
+    return;
+  }
+  if (c === 'docInfo') {
+    alert(`THÔNG TIN TÀI LIỆU (DOCUMENT INFO)\n----------------------------------------\n• Worksheet: Unit 2 – London (WS-Demo-1)\n• Thư mục: Grade 7 Worksheets\n• Bài học: Lesson 1: Vocabulary & Reading\n• Dạng bài: ${typeMeta()[1]}\n• Khổ giấy: ISO A4 Portrait (210 x 297mm)\n• Lần lưu: ${S.saved ? 'Đã lưu' : 'Chưa lưu'}`);
+    return;
+  }
+  if (c === 'print') { window.print(); return; }
+  if (c === 'zoom' || c === 'zoom100') { const z = c === 'zoom100' ? 1 : parseInt(val) / 100; $('#page').style.transform = `scale(${z})`; return; }
+  if (c === 'rmimg') { $('#img').style.display = 'none'; S.sel = 'none'; render(); return; }
+  if (c === 'rmtbl') { tcmd('delTable'); return; }
+  if (c.startsWith('t:')) { if (!(val || '').startsWith('AutoFit')) tcmd(c.slice(2), val, anchor); return; }
+  if (['bigger', 'smaller', 'size', 'fontName', 'cut', 'copy', 'paste', 'undo', 'redo'].includes(c)) {
+    if (c === 'bigger' || c === 'smaller') { toast('Đổi cỡ chữ – chưa nối (cần đo cỡ hiện tại)'); return; }
+    if (c === 'size' || c === 'fontName') { document.execCommand(c === 'size' ? 'fontSize' : 'fontName', false, c === 'size' ? '4' : val); dirty(true); return; }
+    document.execCommand(c); dirty(true); return;
+  }
+  if (c === 'foreColor' || c === 'hiliteColor') { palette(anchor, c); return; }
+  if (c === 'tablegrid') { tableGrid(anchor); return; }
+  if (c === 'layoutgal') { layoutGallery(anchor); return; }
+  document.execCommand(c); dirty(true);
+}
+
+/* ═══════════ PANEL THẢ XUỐNG (mục 18) ═══════════ */
+let popEl = null;
+function closePop() { if (popEl) { popEl.remove(); popEl = null; } }
+function openPop(anchor, node) {
+  closePop();
+  const p = document.createElement('div'); p.className = 'pop'; p.appendChild(node);
+  p.onmousedown = (e) => e.preventDefault();
+  document.body.appendChild(p);
+  const r = (anchor || document.body).getBoundingClientRect();
+  p.style.left = Math.max(8, Math.min(r.left, innerWidth - p.offsetWidth - 8)) + 'px';
+  p.style.top = Math.min(r.bottom + 4, innerHeight - p.offsetHeight - 8) + 'px';
+  popEl = p;
+}
+document.addEventListener('mousedown', (e) => { if (popEl && !popEl.contains(e.target)) closePop(); }, true);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePop(); });
+
+const PALETTE = ['#000000','#434343','#666666','#999999','#cccccc','#ffffff','#dc2626','#ea580c','#ca8a04','#16a34a',
+  '#0891b2','#2563eb','#7c3aed','#db2777','#7f1d1d','#7c2d12','#713f12','#14532d','#164e63','#1e3a8a',
+  '#fecaca','#fed7aa','#fef08a','#bbf7d0','#a5f3fc','#bfdbfe','#ddd6fe','#fbcfe8','#fde047','#86efac'];
+function palette(anchor, cmd) {
+  const box = document.createElement('div');
+  const none = document.createElement('button'); none.className = 'none'; none.textContent = cmd === 'foreColor' ? 'Mặc định (đen)' : 'Không tô nền';
+  none.onclick = () => { document.execCommand(cmd, false, cmd === 'foreColor' ? '#000000' : 'transparent'); dirty(true); closePop(); };
+  const sw = document.createElement('div'); sw.className = 'sw';
+  PALETTE.forEach((c) => { const i = document.createElement('i'); i.style.background = c; i.title = c; i.onclick = () => { document.execCommand(cmd, false, c); dirty(true); closePop(); }; sw.appendChild(i); });
+  box.append(none, sw); openPop(anchor, box);
+}
+function tableGrid(anchor) {
+  const box = document.createElement('div');
+  const g = document.createElement('div'); g.className = 'tg';
+  const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = 'Chọn số hàng × cột';
+  const cells = [];
+  for (let r = 1; r <= 8; r++) for (let c = 1; c <= 8; c++) {
+    const i = document.createElement('i'); cells.push([i, r, c]);
+    i.onmouseover = () => { cells.forEach(([e, rr, cc]) => e.classList.toggle('on', rr <= r && cc <= c)); cap.textContent = `${r} × ${c}`; };
+    i.onclick = () => { closePop(); insertTable(r, c); };
+    g.appendChild(i);
+  }
+  box.append(g, cap); openPop(anchor, box);
+}
+function layoutGallery(anchor) {
+  const box = document.createElement('div');
+  const g = document.createElement('div'); g.className = 'gal';
+  ['1. Khung từ + đoạn văn','2. Khung từ + câu đánh số','3. Khung từ + hai cột','4. Bài hát / thơ + ảnh'].forEach((n, i) => {
+    const bt = document.createElement('button'); if (i === 0) bt.className = 'on';
+    bt.innerHTML = `<div class="th"></div><b>${n}</b>`; bt.onclick = () => { toast('Chọn layout: ' + n); closePop(); };
+    g.appendChild(bt);
+  });
+  const note = document.createElement('div'); note.className = 'cap'; note.textContent = 'Ví dụ cho nhóm A; mỗi loại bài có bộ layout riêng';
+  box.append(g, note); openPop(anchor, box);
+}
+// Menu chuột phải (mục 19)
+document.addEventListener('contextmenu', (e) => {
+  if (!e.target.closest('#page')) return;
+  e.preventDefault();
+  const a = document.createElement('span'); a.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;width:0;height:0`;
+  document.body.appendChild(a);
+  if (T && e.target.closest('.wt td')) { tableMenu(a); a.remove(); return; }
+  const menu = document.createElement('div'); menu.className = 'menu';
+  const ctx = e.target.closest('#img') ? 'img' : 'txt';
+  const items = ctx === 'img' ? ['Replace picture','Wrap text','Remove picture'] : ['Cut','Copy','Paste','Clear formatting'];
+  items.forEach((t) => { const bt = document.createElement('button'); bt.textContent = t; bt.onclick = () => { closePop(); toast(t + ' – bản mẫu'); }; menu.appendChild(bt); });
+  openPop(a, menu); a.remove();
+});
+
+/* ═══════════ QUICK ACCESS TOOLBAR (mục 19) ═══════════ */
+(function qat() {
+  const q = $('#qat');
+  [['💾','Save (Ctrl+S)',() => run({ cmd: 'save' })],['↶','Undo (Ctrl+Z)',() => run({ cmd: 'undo' })],['↷','Redo (Ctrl+Y)',() => run({ cmd: 'redo' })]].forEach(([i, t, f]) => {
+    const bt = document.createElement('button'); bt.className = 'b'; bt.textContent = i; bt.dataset.tip = t; bt.onmousedown = (e) => e.preventDefault(); bt.onclick = f; q.appendChild(bt);
+  });
+})();
+
+/* ═══════════ MINI TOOLBAR NỔI (mục 19) ═══════════ */
+(function mini() {
+  const m = $('#mini');
+  [['B','bold'],['I','italic'],['U','underline'],['S̶','strikeThrough'],['x₂','subscript'],['x²','superscript'],['⌫','removeFormat']].forEach(([l, c]) => {
+    const bt = document.createElement('button'); bt.className = 'b'; bt.textContent = l; bt.onmousedown = (e) => e.preventDefault();
+    bt.onclick = () => { document.execCommand(c); dirty(true); }; m.appendChild(bt);
+  });
+  const cb = document.createElement('button'); cb.className = 'b'; cb.innerHTML = '<span class="col"><span class="ic">A</span><span class="bar" style="background:#dc2626"></span></span>'; cb.onmousedown = (e) => e.preventDefault(); cb.onclick = () => palette(cb, 'foreColor'); m.appendChild(cb);
+  document.addEventListener('selectionchange', () => {
+    const s = getSelection();
+    if (!s.rangeCount || s.isCollapsed || !s.anchorNode || !$('#page').contains(s.anchorNode)) { m.style.display = 'none'; return; }
+    const r = s.getRangeAt(0).getBoundingClientRect();
+    m.style.display = 'flex'; m.style.left = Math.max(8, r.left) + 'px'; m.style.top = Math.max(8, r.top - 40) + 'px';
+  });
+})();
+
+/* ═══════════ TOOLTIP ═══════════ */
+const tipEl = $('#tip');
+document.addEventListener('mouseover', (e) => {
+  const t = e.target.closest('[data-tip]'); if (!t) return;
+  tipEl.textContent = t.dataset.tip; tipEl.style.display = 'block';
+  const r = t.getBoundingClientRect(); tipEl.style.left = Math.min(r.left, innerWidth - 310) + 'px'; tipEl.style.top = r.bottom + 6 + 'px';
+});
+document.addEventListener('mouseout', (e) => { if (e.target.closest('[data-tip]')) tipEl.style.display = 'none'; });
+
+/* ═══════════ BẢNG KIỂU WORD ═══════════ */
+let T = null, drag = null; // T = { t: bảng, a: ô neo, f: ô cuối vùng chọn }
+const PXMM = 96 / 25.4, EDGE = '1px solid #334155';
+const pgScale = () => $('#page').getBoundingClientRect().width / $('#page').offsetWidth || 1;
+const mkTd = () => { const d = document.createElement('td'); d.contentEditable = 'true'; d.innerHTML = '&nbsp;'; return d; };
+const colsOf = (t) => [...t.querySelectorAll(':scope > colgroup > col')];
+function gmap(t) { // lưới ô, có tính ô gộp; gán _r/_c cho từng ô
+  const g = [];
+  [...t.rows].forEach((tr, r) => { g[r] = g[r] || []; let c = 0;
+    [...tr.cells].forEach((td) => { while (g[r][c]) c++; td._r = r; td._c = c;
+      for (let i = 0; i < td.rowSpan; i++) for (let j = 0; j < td.colSpan; j++) (g[r + i] = g[r + i] || [])[c + j] = td;
+      c += td.colSpan; }); });
+  return g;
+}
+const nCols = (g) => Math.max(...g.map((r) => r.length));
+function tRect() { // vùng chọn chữ nhật, tự nở ra để không cắt ô gộp
+  const g = gmap(T.t), ext = (x) => [x._r, x._c, x._r + x.rowSpan - 1, x._c + x.colSpan - 1];
+  const [a, b] = [ext(T.a), ext(T.f)];
+  let r1 = Math.min(a[0], b[0]), c1 = Math.min(a[1], b[1]), r2 = Math.max(a[2], b[2]), c2 = Math.max(a[3], b[3]), ch = true;
+  while (ch) { ch = false;
+    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) { const x = g[r][c]; if (!x) continue; const e = ext(x);
+      if (e[0] < r1 || e[1] < c1 || e[2] > r2 || e[3] > c2) { r1 = Math.min(r1, e[0]); c1 = Math.min(c1, e[1]); r2 = Math.max(r2, e[2]); c2 = Math.max(c2, e[3]); ch = true; } } }
+  return { g, r1, c1, r2, c2 };
+}
+function tCells() { const R = tRect(), s = new Set(); for (let r = R.r1; r <= R.r2; r++) for (let c = R.c1; c <= R.c2; c++) s.add(R.g[r][c]); s.delete(undefined); return [...s]; }
+function tPaint() { if (!T) return; T.t.querySelectorAll('.tsel').forEach((x) => x.classList.remove('tsel')); const cs = tCells(); if (cs.length > 1) cs.forEach((x) => x.classList.add('tsel')); }
+function tPlace() {
+  const m = $('#tmove'), s = $('#tsize');
+  if (!T || !document.contains(T.t)) { m.style.display = s.style.display = 'none'; return; }
+  const r = T.t.getBoundingClientRect();
+  m.style.display = s.style.display = 'block'; m.style.left = r.left - 20 + 'px'; m.style.top = r.top - 20 + 'px'; s.style.left = r.right + 4 + 'px'; s.style.top = r.bottom + 4 + 'px';
+}
+function tSelect(t, a, f) {
+  a = a || t.rows[0].cells[0];
+  T = { t, a, f: f || a }; tPaint(); tPlace();
+  if (S.sel !== 'table') { S.sel = 'table'; $('#ctxSel').value = 'table'; $('#img').classList.remove('sel'); S.tab = 'Table Layout'; render(); }
+}
+function tClear() { if (T) T.t.querySelectorAll('.tsel').forEach((x) => x.classList.remove('tsel')); T = null; tPlace(); }
+function tFocus(td) { td.focus(); const r = document.createRange(); r.selectNodeContents(td); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+function tv() { return T ? { rowh: +(T.f.parentElement.offsetHeight / PXMM).toFixed(1), colw: +(T.f.offsetWidth / PXMM).toFixed(1) } : { rowh: 9, colw: 60 }; }
+
+function insertTable(r, c) {
+  const t = document.createElement('table'); t.className = 'wt';
+  t.innerHTML = '<tbody>' + ('<tr>' + '<td contenteditable="true">&nbsp;</td>'.repeat(c) + '</tr>').repeat(r) + '</tbody>';
+  const body = $('#body'), s = getSelection(), gap = document.createElement('p'); gap.innerHTML = '<br>';
+  let blk = s.rangeCount && body.contains(s.anchorNode) ? s.anchorNode : null;
+  while (blk && blk.parentNode !== body) blk = blk.parentNode;
+  blk ? blk.after(t, gap) : body.append(t, gap);
+  dirty(true); tSelect(t); tFocus(t.rows[0].cells[0]);
+}
+function ensureCols(t) {
+  if (colsOf(t).length && t.style.tableLayout === 'fixed') return;
+  const g = gmap(t), nc = nCols(g), w = [];
+  for (let c = 0; c < nc; c++) { const x = g.map((r) => r[c]).find((d) => d && d.colSpan === 1); w[c] = x ? x.offsetWidth : t.offsetWidth / nc; }
+  t.querySelector(':scope > colgroup')?.remove();
+  const cg = document.createElement('colgroup');
+  w.forEach((px) => { const c = document.createElement('col'); c.style.width = px + 'px'; cg.appendChild(c); });
+  t.prepend(cg); t.style.tableLayout = 'fixed'; syncW(t);
+}
+function syncW(t) { const s = colsOf(t).reduce((a, c) => a + parseFloat(c.style.width), 0); if (s) t.style.width = s + 'px'; }
+function insRow(t, at) {
+  const g = gmap(t), nc = nCols(g), tr = document.createElement('tr'), ref = t.rows[Math.min(at, t.rows.length - 1)];
+  if (ref && ref.style.height) tr.style.height = ref.style.height;
+  for (let c = 0; c < nc; c++) { const x = g[at] && g[at][c]; if (x && x._r < at) { if (x._c === c) x.rowSpan++; continue; } tr.appendChild(mkTd()); }
+  t.rows[at] ? t.rows[at].before(tr) : (t.tBodies[0] || t).appendChild(tr);
+}
+function insCol(t, at) {
+  const g = gmap(t);
+  g.forEach((row, r) => { const x = row[at];
+    if (x && x._c < at) { if (x._r === r) x.colSpan++; return; }
+    const ref = [...t.rows[r].cells].find((d) => d._c >= at), td = mkTd(); ref ? ref.before(td) : t.rows[r].appendChild(td); });
+  const cg = colsOf(t);
+  if (cg.length) { const col = document.createElement('col'); col.style.width = cg[Math.min(at, cg.length - 1)].style.width; cg[at] ? cg[at].before(col) : cg[cg.length - 1].after(col); syncW(t); }
+}
+function delRows(t, r1, r2) {
+  for (let r = r2; r >= r1; r--) {
+    const g = gmap(t), tr = t.rows[r], next = t.rows[r + 1];
+    g[r].forEach((x, c) => { if (x._r < r && x._c === c) x.rowSpan--; });
+    [...tr.cells].forEach((x) => { if (x.rowSpan > 1 && next) { const n = x.cloneNode(true); n.rowSpan = x.rowSpan - 1; const ref = [...next.cells].find((d) => d._c > x._c); ref ? ref.before(n) : next.appendChild(n); } });
+    tr.remove();
+  }
+}
+function delCols(t, c1, c2) {
+  for (let c = c2; c >= c1; c--) {
+    const g = gmap(t), s = new Set(g.map((r) => r[c]));
+    s.forEach((x) => { if (x) x.colSpan > 1 ? x.colSpan-- : x.remove(); });
+    colsOf(t)[c]?.remove();
+  }
+  syncW(t);
+}
+function tMerge(R) {
+  const cs = tCells(), first = R.g[R.r1][R.c1];
+  cs.forEach((x) => { if (x === first) return; if (x.textContent.replace(/ /g, '').trim()) first.innerHTML += ' ' + x.innerHTML; x.remove(); });
+  first.colSpan = R.c2 - R.c1 + 1; first.rowSpan = R.r2 - R.r1 + 1; T.a = T.f = first;
+}
+function tSplit() {
+  const x = T.f, cs = x.colSpan, rs = x.rowSpan; gmap(T.t);
+  if (cs === 1 && rs === 1) { toast('Ô này chưa bị gộp nên không tách được'); return false; }
+  const r = x._r, c = x._c; x.colSpan = 1; x.rowSpan = 1;
+  for (let i = 0; i < rs; i++) { const tr = T.t.rows[r + i], ref = [...tr.cells].find((d) => d !== x && d._c >= c + cs);
+    for (let j = i === 0 ? 1 : 0; j < cs; j++) { const n = mkTd(); ref ? ref.before(n) : tr.appendChild(n); } }
+  return true;
+}
+const OPP = { Top: 'Bottom', Bottom: 'Top', Left: 'Right', Right: 'Left' };
+function tBorders(kind) {
+  const R = tRect();
+  const nbr = (x, s) => s === 'Top' ? R.g[x._r - 1]?.[x._c] : s === 'Bottom' ? R.g[x._r + x.rowSpan]?.[x._c] : s === 'Left' ? R.g[x._r][x._c - 1] : R.g[x._r][x._c + x.colSpan];
+  tCells().forEach((x) => {
+    const edge = { Top: x._r === R.r1, Bottom: x._r + x.rowSpan - 1 === R.r2, Left: x._c === R.c1, Right: x._c + x.colSpan - 1 === R.c2 };
+    ['Top', 'Bottom', 'Left', 'Right'].forEach((s) => {
+      let v = null;
+      if (kind === 'all') v = EDGE; else if (kind === 'none') v = 'none';
+      else if (kind === 'outside') v = edge[s] ? EDGE : null; else if (kind === 'inside') v = edge[s] ? null : EDGE;
+      else if (kind === s.toLowerCase()) v = edge[s] ? EDGE : null;
+      if (!v) return;
+      x.style['border' + s] = v; const n = nbr(x, s); if (n) n.style['border' + OPP[s]] = v;
+    });
+  });
+}
+const BORDERS = [['All Borders', 'all'], ['No Border', 'none'], ['Outside Borders', 'outside'], ['Inside Borders', 'inside'], ['Top Border', 'top'], ['Bottom Border', 'bottom'], ['Left Border', 'left'], ['Right Border', 'right']];
+const ALIGNS = [['Top Left', 'left', 'top'], ['Top Center', 'center', 'top'], ['Top Right', 'right', 'top'], ['Center Left', 'left', 'middle'], ['Center', 'center', 'middle'], ['Center Right', 'right', 'middle'], ['Bottom Left', 'left', 'bottom'], ['Bottom Center', 'center', 'bottom'], ['Bottom Right', 'right', 'bottom']];
+const PADS = [['Narrow', '1mm 2mm'], ['Normal', '2mm 3mm'], ['Wide', '3mm 5mm']];
+
+function menuBox(items) {
+  const m = document.createElement('div'); m.className = 'menu';
+  items.forEach((it) => {
+    if (it === '-') { m.appendChild(document.createElement('hr')); return; }
+    const [label, act] = it, bt = document.createElement('button'); bt.textContent = label;
+    if (Array.isArray(act)) { const w = document.createElement('div'), sub = document.createElement('div'); w.className = 'wrap'; sub.className = 'subm'; bt.className = 'hs'; sub.appendChild(menuBox(act)); w.append(bt, sub); m.appendChild(w); }
+    else { bt.onclick = () => { closePop(); act(); }; m.appendChild(bt); }
+  });
+  return m;
+}
+const popMenu = (anchor, items) => openPop(anchor, menuBox(items));
+function pickColor(anchor, cb) {
+  const box = document.createElement('div'), sw = document.createElement('div'), none = document.createElement('button');
+  none.className = 'none'; none.textContent = 'Không tô nền'; none.onclick = () => { cb(''); closePop(); }; sw.className = 'sw';
+  PALETTE.forEach((c) => { const i = document.createElement('i'); i.style.background = c; i.title = c; i.onclick = () => { cb(c); closePop(); }; sw.appendChild(i); });
+  box.append(none, sw); openPop(anchor, box);
+}
+
+function tcmd(n, val, anchor) {
+  if (!T) { toast('Bấm vào một ô trong bảng trước'); return; }
+  const t = T.t, R = tRect(), nr = R.r2 - R.r1 + 1, nc = R.c2 - R.c1 + 1;
+  const done = () => { tPaint(); tPlace(); dirty(true); };
+  const after = (r, c) => { const g = gmap(t), row = g[Math.min(r, g.length - 1)]; T.a = T.f = row[Math.min(c, row.length - 1)]; done(); };
+  const ctn = () => { const p = t.parentElement, s = getComputedStyle(p); return p.clientWidth - parseFloat(s.paddingLeft) - parseFloat(s.paddingRight); };
+  const rowsSel = () => nr > 1 ? [...t.rows].slice(R.r1, R.r2 + 1) : [...t.rows];
+  switch (n) {
+    case 'insA': for (let i = 0; i < nr; i++) insRow(t, R.r1); return done();
+    case 'insB': for (let i = 0; i < nr; i++) insRow(t, R.r2 + 1); return done();
+    case 'insL': for (let i = 0; i < nc; i++) insCol(t, R.c1); return done();
+    case 'insR': for (let i = 0; i < nc; i++) insCol(t, R.c2 + 1); return done();
+    case 'del': return popMenu(anchor, [['Delete Columns', () => tcmd('delCols')], ['Delete Rows', () => tcmd('delRows')], ['Delete Table', () => tcmd('delTable')]]);
+    case 'delRows': if (nr >= t.rows.length) return tcmd('delTable'); delRows(t, R.r1, R.r2); return after(R.r1, R.c1);
+    case 'delCols': if (nc >= nCols(R.g)) return tcmd('delTable'); delCols(t, R.c1, R.c2); return after(R.r1, R.c1);
+    case 'delTable': t.remove(); tClear(); S.sel = 'text'; $('#ctxSel').value = 'text'; dirty(true); return render();
+    case 'merge': if (tCells().length < 2) return toast('Chọn từ 2 ô trở lên để gộp'); tMerge(R); return after(R.r1, R.c1);
+    case 'split': if (tSplit()) done(); return;
+    case 'rowh': for (let r = R.r1; r <= R.r2; r++) t.rows[r].style.height = Math.max(3, +val || 9) + 'mm'; return done();
+    case 'colw': { ensureCols(t); const cg = colsOf(t); for (let c = R.c1; c <= R.c2; c++) cg[c].style.width = Math.max(5, +val || 20) * PXMM + 'px'; syncW(t); return done(); }
+    case 'autofit':
+      if (val === 'Content') { t.querySelector(':scope > colgroup')?.remove(); t.style.tableLayout = 'auto'; t.style.width = 'auto'; }
+      else { t.style.tableLayout = ''; ensureCols(t); if (val === 'Page') { const cg = colsOf(t), k = ctn() / cg.reduce((a, c) => a + parseFloat(c.style.width), 0); cg.forEach((c) => c.style.width = parseFloat(c.style.width) * k + 'px'); syncW(t); } }
+      return done();
+    case 'distR': { const rs = rowsSel(), h = rs.reduce((a, tr) => a + tr.offsetHeight, 0) / rs.length; rs.forEach((tr) => tr.style.height = h + 'px'); return done(); }
+    case 'distC': { ensureCols(t); const cg = colsOf(t), sel = nc > 1 ? cg.slice(R.c1, R.c2 + 1) : cg, w = sel.reduce((a, c) => a + parseFloat(c.style.width), 0) / sel.length; sel.forEach((c) => c.style.width = w + 'px'); syncW(t); return done(); }
+    case 'align': return popMenu(anchor, ALIGNS.map(([l, h, v]) => ['Align ' + l, () => tcmd('alignSet', h + '|' + v)]));
+    case 'alignSet': { const [h, v] = val.split('|'); tCells().forEach((x) => { x.style.textAlign = h; x.style.verticalAlign = v; }); return done(); }
+    case 'dir': tCells().forEach((x) => x.style.writingMode = x.style.writingMode === 'vertical-rl' ? '' : 'vertical-rl'); return done();
+    case 'borders': return popMenu(anchor, BORDERS.map(([l, k]) => [l, () => tcmd('bordSet', k)]));
+    case 'bordSet': tBorders(val); return done();
+    case 'shade': return pickColor(anchor, (c) => { tCells().forEach((x) => x.style.background = c); done(); });
+    case 'pad': return popMenu(anchor, PADS.map(([l, v]) => ['Cell padding: ' + l, () => tcmd('padSet', v)]));
+    case 'padSet': t.querySelectorAll('td').forEach((x) => x.style.padding = val); return done();
+    case 'header': { const on = t.dataset.hdr !== '1'; t.dataset.hdr = on ? '1' : ''; [...t.rows[0].cells].forEach((x) => { x.style.fontWeight = on ? '700' : ''; x.style.background = on ? '#e5e7eb' : ''; }); toast(on ? 'Đã bật hàng tiêu đề' : 'Đã tắt hàng tiêu đề'); return done(); }
+    case 'left': case 'center': case 'right':
+      if (t.style.width === '' || t.style.width === '100%') ensureCols(t);
+      t.style.marginLeft = n === 'left' ? '0' : 'auto'; t.style.marginRight = n === 'right' ? '0' : 'auto'; return done();
+  }
+}
+function tableMenu(a) {
+  const multi = tCells().length > 1, merged = T.f.colSpan > 1 || T.f.rowSpan > 1;
+  const ins = [['Insert Columns to the Left', () => tcmd('insL')], ['Insert Columns to the Right', () => tcmd('insR')], ['Insert Rows Above', () => tcmd('insA')], ['Insert Rows Below', () => tcmd('insB')]];
+  const del = [['Delete Columns', () => tcmd('delCols')], ['Delete Rows', () => tcmd('delRows')], ['Delete Table', () => tcmd('delTable')]];
+  const bar = document.createElement('div'); bar.className = 'tbar';
+  [['B', 'bold'], ['I', 'italic'], ['U', 'underline']].forEach(([l, c]) => { const bt = document.createElement('button'); bt.textContent = l; bt.onclick = () => { document.execCommand(c); dirty(true); }; bar.appendChild(bt); });
+  const sh = document.createElement('button'); sh.textContent = '▨'; sh.title = 'Shading'; sh.onclick = () => tcmd('shade', undefined, sh);
+  const bd = document.createElement('button'); bd.textContent = '▢'; bd.title = 'Borders'; bd.onclick = () => tcmd('borders', undefined, bd);
+  bar.append(sh, bd);
+  [['Insert ▾', ins], ['Delete ▾', del]].forEach(([l, items]) => { const w = document.createElement('div'), bt = document.createElement('button'), sub = document.createElement('div'); w.className = 'wrap'; sub.className = 'subm'; bt.textContent = l; sub.appendChild(menuBox(items)); w.append(bt, sub); bar.appendChild(w); });
+  const fit = (l, v) => [l, () => tcmd('autofit', v)];
+  const items = [
+    ['Cut', () => document.execCommand('cut')], ['Copy', () => document.execCommand('copy')], ['Paste', () => document.execCommand('paste')], '-',
+    ['Insert', ins], ['Delete Table', () => tcmd('delTable')],
+    ...(multi ? [['Merge Cells', () => tcmd('merge')]] : []), ...(merged ? [['Split Cells', () => tcmd('split')]] : []),
+    ['Distribute Rows Evenly', () => tcmd('distR')], ['Distribute Columns Evenly', () => tcmd('distC')], '-',
+    ['Border Styles', BORDERS.map(([l, k]) => [l, () => tcmd('bordSet', k)])],
+    ['AutoFit', [fit('AutoFit to Contents', 'Content'), fit('AutoFit to Window', 'Page'), fit('Fixed Column Width', 'Fixed')]],
+    ['Text Direction…', () => tcmd('dir')], ['Table Properties…', () => { S.tab = 'Table Layout'; render(); toast('Table Properties – dùng các nhóm của tab Table Layout'); }],
+  ];
+  const box = document.createElement('div'); box.append(bar, menuBox(items)); openPop(a, box);
+}
+// Chọn ô, kéo chọn nhiều ô, kéo mép cột
+function colDrag(t, td, e) {
+  gmap(t); ensureCols(t);
+  const cg = colsOf(t), i = td._c + td.colSpan - 1, w0 = cg.map((c) => parseFloat(c.style.width)), x0 = e.clientX, s = pgScale();
+  const mv = (ev) => { const w = Math.max(20, w0[i] + (ev.clientX - x0) / s); cg[i].style.width = w + 'px'; if (cg[i + 1]) cg[i + 1].style.width = Math.max(20, w0[i + 1] - (w - w0[i])) + 'px'; syncW(t); tPlace(); dirty(true); };
+  const up = () => { removeEventListener('mousemove', mv); removeEventListener('mouseup', up); if (S.tab === 'Table Layout') renderRibbon(); };
+  addEventListener('mousemove', mv); addEventListener('mouseup', up);
+}
+document.addEventListener('mousedown', (e) => {
+  const td = e.target.closest && e.target.closest('.wt td');
+  if (!td) {
+    if (T && !e.target.closest('#ribbon,#tabs,.pop,.mini,#tmove,#tsize,.devbar,.titlebar')) { tClear(); S.sel = e.target.closest('#body') ? 'text' : 'none'; $('#ctxSel').value = S.sel; render(); }
+    return;
+  }
+  const t = td.closest('table');
+  if (e.button !== 0) { if (!T || T.t !== t || !tCells().includes(td)) tSelect(t, td, td); return; }
+  const r = td.getBoundingClientRect();
+  if (e.clientX > r.right - 4 && e.clientX <= r.right + 3) { e.preventDefault(); tSelect(t, td, td); colDrag(t, td, e); return; }
+  const anchor = e.shiftKey && T && T.t === t ? T.a : td;
+  gmap(t); tSelect(t, anchor, td); drag = { t, a: anchor };
+});
+document.addEventListener('mousemove', (e) => {
+  const td = e.target.closest && e.target.closest('.wt td');
+  if (drag) {
+    if (td && td.closest('table') === drag.t && td !== T.f) { T.f = td; tPaint(); drag.t.classList.add('dragging'); getSelection().removeAllRanges(); }
+    return;
+  }
+  if (td) { const r = td.getBoundingClientRect(); td.closest('table').style.cursor = e.clientX > r.right - 4 ? 'col-resize' : ''; }
+});
+document.addEventListener('mouseup', () => { if (!drag) return; drag.t.classList.remove('dragging'); drag = null; if (S.tab === 'Table Layout') renderRibbon(); });
+$('#tmove').onmousedown = (e) => e.preventDefault();
+$('#tmove').onclick = () => { if (!T) return; const g = gmap(T.t); T.a = g[0][0]; T.f = g[g.length - 1][g[0].length - 1]; tPaint(); renderRibbon(); };
+$('#tsize').onmousedown = (e) => {
+  if (!T) return; e.preventDefault();
+  const t = T.t; ensureCols(t);
+  const cg = colsOf(t), w0 = cg.map((c) => parseFloat(c.style.width)), tw = w0.reduce((a, b) => a + b, 0), h0 = [...t.rows].map((tr) => tr.offsetHeight), x0 = e.clientX, y0 = e.clientY, s = pgScale();
+  const mv = (ev) => {
+    const k = Math.max(60, tw + (ev.clientX - x0) / s) / tw, dy = (ev.clientY - y0) / s / t.rows.length;
+    cg.forEach((c, i) => c.style.width = w0[i] * k + 'px'); syncW(t);
+    [...t.rows].forEach((tr, i) => tr.style.height = Math.max(20, h0[i] + dy) + 'px'); tPlace(); dirty(true);
+  };
+  const up = () => { removeEventListener('mousemove', mv); removeEventListener('mouseup', up); if (S.tab === 'Table Layout') renderRibbon(); };
+  addEventListener('mousemove', mv); addEventListener('mouseup', up);
+};
+document.addEventListener('keydown', (e) => { // Tab = ô kế; Tab ở ô cuối = thêm hàng (như Word)
+  if (e.key !== 'Tab') return;
+  const td = e.target.closest && e.target.closest('.wt td'); if (!td) return;
+  e.preventDefault();
+  const t = td.closest('table'); let all = [...t.querySelectorAll('td')]; const i = all.indexOf(td) + (e.shiftKey ? -1 : 1);
+  if (i >= all.length) { insRow(t, t.rows.length); all = [...t.querySelectorAll('td')]; dirty(true); }
+  const n = all[i]; if (n) { tSelect(t, n, n); tFocus(n); }
+});
+document.addEventListener('input', (e) => { if (e.target.closest && e.target.closest('.wt')) { dirty(true); tPlace(); } });
+document.addEventListener('scroll', tPlace, true);
+addEventListener('resize', tPlace);
+
+/* ═══════════ KHỞI TẠO ═══════════ */
+TYPES.forEach(([id, label, g]) => { const o = document.createElement('option'); o.value = id; o.textContent = `${label}  (${g})`; $('#typeSel').appendChild(o); });
+$('#typeSel').onchange = (e) => { S.type = e.target.value; render(); };
+$('#ctxSel').onchange = (e) => {
+  S.sel = e.target.value; $('#img').classList.toggle('sel', S.sel === 'image');
+  if (S.sel === 'table') { const t = document.querySelector('#page .wt'); if (t) tSelect(t); else { toast('Chưa có bảng nào – dùng Insert › Table'); S.sel = 'none'; $('#ctxSel').value = 'none'; } } else tClear();
+  if (S.sel === 'image') S.tab = 'Picture Format'; if (S.sel === 'table') S.tab = 'Table Layout'; render();
+};
+$('#stChk').onchange = (e) => document.body.classList.toggle('show-st', e.target.checked);
+$('#saveBtn').onclick = () => run({ cmd: 'save' });
+$('#img').onclick = () => { $('#ctxSel').value = 'image'; $('#ctxSel').onchange({ target: { value: 'image' } }); };
+$('#body').addEventListener('focus', () => { if (S.sel !== 'text') { S.sel = 'text'; $('#ctxSel').value = 'text'; $('#img').classList.remove('sel'); tClear(); render(); } });
+$('#body').addEventListener('input', () => dirty(true));
+document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); run({ cmd: 'save' }); } });
+render();
+</script>
+</body>
+</html>
