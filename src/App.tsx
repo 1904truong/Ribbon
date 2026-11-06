@@ -835,19 +835,24 @@ export default function App() {
 
   const applyFontSize = (points: number) => {
     if (!Number.isFinite(points)) return;
-    if (!applyInlineStyles({ fontSize: `${points}pt` })) {
+    // The Home ribbon only exposes Word-like worksheet sizes from 8–48pt.
+    // Clamp values here as well so malformed pasted data or a programmatic
+    // command cannot create an unreadable 1pt/111pt fragment in the document.
+    const safePoints = Math.min(FONT_SIZES[FONT_SIZES.length - 1], Math.max(FONT_SIZES[0], Math.round(points)));
+    if (!applyInlineStyles({ fontSize: `${safePoints}pt` })) {
       if (!restoreEditorSelection()) return;
       document.execCommand('styleWithCSS', false, 'false');
       document.execCommand('fontSize', false, '7');
       pageRef.current?.querySelectorAll<HTMLElement>('font[size="7"]').forEach((font) => {
-        font.style.fontSize = `${points}pt`;
+        font.style.fontSize = `${safePoints}pt`;
         font.removeAttribute('size');
       });
       document.execCommand('styleWithCSS', false, 'true');
       dirty();
       refreshTextState();
     }
-    setAttrs((current) => ({ ...current, fontSizePt: points }));
+    setAttrs((current) => ({ ...current, fontSizePt: safePoints }));
+    if (safePoints !== Math.round(points)) say(`Cỡ chữ được giới hạn trong khoảng 8–48 pt (${safePoints} pt).`);
   };
 
   const applyBlockStyle = (styleName: NonNullable<TextAttrs['blockStyle']>) => {
@@ -951,6 +956,23 @@ export default function App() {
     const holder = document.createElement('div');
     holder.append(fragment);
     const text = currentSelection.toString();
+    // cloneContents() drops a styled ancestor when only part of its text node
+    // is selected. Preserve the visible inline style in the rich clipboard HTML.
+    const sourceElement = nodeElement(range.startContainer);
+    const sourceStyle = sourceElement ? window.getComputedStyle(sourceElement) : null;
+    const richWrapper = document.createElement('span');
+    if (sourceStyle) {
+      richWrapper.style.fontFamily = sourceStyle.fontFamily;
+      richWrapper.style.fontSize = sourceStyle.fontSize;
+      richWrapper.style.fontWeight = sourceStyle.fontWeight;
+      richWrapper.style.fontStyle = sourceStyle.fontStyle;
+      richWrapper.style.textDecoration = sourceStyle.textDecoration;
+      richWrapper.style.color = sourceStyle.color;
+      richWrapper.style.backgroundColor = sourceStyle.backgroundColor;
+      richWrapper.style.verticalAlign = sourceStyle.verticalAlign;
+    }
+    while (holder.firstChild) richWrapper.append(holder.firstChild);
+    holder.append(richWrapper);
     let copied = false;
     try {
       if (navigator.clipboard?.write && 'ClipboardItem' in window) {
@@ -1995,6 +2017,33 @@ export default function App() {
       case 'blockStyle':
       case 'hintParen':
       case 'answerLine': {
+        const current = exercises[activeExIndex] ?? exercises[0];
+        const rawValue = value ?? '';
+        let normalized: string | number | boolean = rawValue;
+        const enabledIds = new Set(['imageOptions', 'underlineWord', 'showImage', 'caption', 'imageLabel', 'headerRow', 'cellBlank', 'hintParen', 'answerLine']);
+        if (enabledIds.has(id)) normalized = ['Bật', 'Hiện', 'Có', 'true'].includes(String(rawValue));
+        if (['startNumber', 'imageWidth', 'imageHeight', 'columnGap', 'columnWidth', 'rowGap', 'imageSize', 'rows', 'cols'].includes(id)) normalized = Number(rawValue);
+
+        const nextExercise: ExerciseBlock = {
+          ...current,
+          options: { ...(current.options ?? {}), [id]: normalized },
+        };
+        if (id === 'startNumber' && current.questions) {
+          const start = Math.max(1, Number(normalized) || 1);
+          nextExercise.questions = current.questions.map((question, index) => ({ ...question, number: start + index }));
+        }
+        if ((id === 'rows' || id === 'cols') && current.tableData) {
+          const rowCount = id === 'rows' ? Math.max(1, Math.min(20, Number(normalized) || 1)) : current.tableData.rows.length;
+          const columnCount = id === 'cols' ? Math.max(1, Math.min(10, Number(normalized) || 1)) : Math.max(1, current.tableData.headers.length);
+          const headers = Array.from({ length: columnCount }, (_, index) => current.tableData?.headers[index] ?? `Column ${index + 1}`);
+          const rows = Array.from({ length: rowCount }, (_, rowIndex) =>
+            Array.from({ length: columnCount }, (_, columnIndex) => current.tableData?.rows[rowIndex]?.[columnIndex] ?? '')
+          );
+          nextExercise.tableData = { headers, rows };
+        }
+        const nextList = [...exercises];
+        nextList[activeExIndex] = nextExercise;
+        setExercises(nextList);
         dirty();
         say(`✓ Đã áp dụng cài đặt [${id}]: ${value}`);
         return true;
@@ -2420,7 +2469,7 @@ export default function App() {
         tab={tab}
         onTab={setTab}
         onCommand={run}
-        onNotWired={(l) => say(`(${l}) – giao diện, chưa nối chức năng`)}
+        onNotWired={(label) => say(`${label}: chức năng không khả dụng trong ngữ cảnh hiện tại.`)}
       />
 
       <div className={`work${previewMode ? ' preview-mode' : ''}${showGridlines ? ' show-gridlines' : ''}`}>
@@ -2605,9 +2654,15 @@ export default function App() {
                   </div>
                 )}
 
-                {idx === 0 && !imgHidden && (
+                {idx === 0 && !imgHidden && ex.options?.showImage !== false && (
                   <div
                     className={`img${selection === 'image' ? ' sel' : ''}`}
+                    style={{
+                      width: ex.options?.imageWidth ? `${Number(ex.options.imageWidth)}%` : undefined,
+                      height: ex.options?.imageHeight ? `${Number(ex.options.imageHeight)}mm` : undefined,
+                      float: ex.options?.imagePosition === 'Trái' ? 'left' : ex.options?.imagePosition === 'Phải' ? 'right' : 'none',
+                      clear: ['Trên', 'Dưới'].includes(String(ex.options?.imagePosition)) ? 'both' : undefined,
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       select('image');
@@ -2648,7 +2703,11 @@ export default function App() {
                             suppressContentEditableWarning
                             onBeforeInput={pushHistory}
                             onInput={dirty}
-                            dangerouslySetInnerHTML={{ __html: q.text }}
+                            dangerouslySetInnerHTML={{
+                              __html: ex.options?.underlineWord === true
+                                ? q.text.replace(/\[([^\]]+)\]/g, '<u>$1</u>')
+                                : q.text,
+                            }}
                           />
                         </div>
                         {q.options && q.options.length > 0 && (
@@ -2661,12 +2720,20 @@ export default function App() {
                             {q.options.map((opt, optIdx) => (
                               <label key={optIdx} className="rb-mcq-option">
                                 <input type="radio" name={`mcq-${idx}-${qIdx}`} />
+                                {ex.options?.imageOptions === true && <span className="rb-option-image-placeholder">Image {optIdx + 1}</span>}
                                 <span
                                   contentEditable={!previewMode}
                                   suppressContentEditableWarning
                                   onBeforeInput={pushHistory}
                                   onInput={dirty}
-                                  dangerouslySetInnerHTML={{ __html: opt }}
+                                  dangerouslySetInnerHTML={{
+                                    __html: (() => {
+                                      const clean = opt.replace(/^([A-Z]\.|[a-z]\)|[①-⑩])\s*/u, '');
+                                      const mode = String(ex.options?.optionLabel ?? 'A.');
+                                      const label = mode === 'a)' ? `${String.fromCharCode(97 + optIdx)})` : mode === '①' ? String.fromCodePoint(0x2460 + optIdx) : `${String.fromCharCode(65 + optIdx)}.`;
+                                      return `${label} ${clean}`;
+                                    })(),
+                                  }}
                                 />
                               </label>
                             ))}
@@ -2681,7 +2748,7 @@ export default function App() {
                 {adapterOf(ex.type ?? type).group === 'C' && ex.clozeQuestions && ex.clozeQuestions.length > 0 && (
                   <div className="rb-cloze-choices-wrap" style={{ marginTop: 12 }}>
                     <div style={{ fontWeight: 700, fontSize: 12, color: '#475569', marginBottom: 6, textTransform: 'uppercase' }}>Options for gaps:</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: ex.options?.optionsStyle === 'Danh sách' ? '1fr' : 'repeat(2, 1fr)', gap: 8 }}>
                       {ex.clozeQuestions.map((cq, cqIdx) => (
                         <div key={cqIdx} style={{ padding: '6px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 4, fontSize: 12 }}>
                           <strong>({cq.number})</strong>{' '}
@@ -2719,7 +2786,7 @@ export default function App() {
                             {stmt.text}
                           </span>
                         </div>
-                        <div className="rb-tfng-pills">
+                        <div className="rb-tfng-pills" data-answer-style={String(ex.options?.answerColumn ?? 'T F NG')}>
                           {(['True', 'False', 'Not Given'] as const).map((pill) => (
                             <button
                               key={pill}
@@ -2734,7 +2801,11 @@ export default function App() {
                                 dirty();
                               }}
                             >
-                              {pill === 'Not Given' ? 'NG' : pill}
+                              {ex.options?.answerColumn === 'Ô tròn'
+                                ? '○'
+                                : ex.options?.answerColumn === 'T F NG'
+                                ? (pill === 'Not Given' ? 'NG' : pill[0])
+                                : (pill === 'Not Given' ? 'NG' : pill)}
                             </button>
                           ))}
                         </div>
@@ -2745,12 +2816,22 @@ export default function App() {
 
                 {/* 5. Group E: Nối chữ (Matching 2 columns) */}
                 {adapterOf(ex.type ?? type).group === 'E' && ex.matchingPairs && ex.matchingPairs.length > 0 && (
-                  <div className="rb-matching-grid" style={{ marginTop: 12 }}>
+                  <div
+                    className="rb-matching-grid"
+                    style={{
+                      marginTop: 12,
+                      gridTemplateColumns: `${Number(ex.options?.columnWidth ?? 50)}fr ${100 - Number(ex.options?.columnWidth ?? 50)}fr`,
+                      gap: `${Number(ex.options?.columnGap ?? 10)}mm`,
+                      '--row-gap': `${Number(ex.options?.rowGap ?? 4.5)}mm`,
+                    } as CSSProperties}
+                  >
                     <div className="rb-matching-col">
                       <div className="rb-matching-col-header">Left Column (1 - {ex.matchingPairs.length})</div>
                       {ex.matchingPairs.map((pair, pIdx) => (
                         <div key={pIdx} className="rb-matching-item">
-                          <span className="rb-matching-badge">{pair.leftNumber}</span>
+                          <span className="rb-matching-badge">
+                            {ex.options?.leftLabel === 'a,b,c' ? String.fromCharCode(97 + pIdx) : ex.options?.leftLabel === 'A,B,C' ? String.fromCharCode(65 + pIdx) : pIdx + 1}
+                          </span>
                           <span
                             contentEditable={!previewMode}
                             suppressContentEditableWarning
@@ -2785,7 +2866,14 @@ export default function App() {
 
                 {/* 6. Group F: Matching Pictures */}
                 {adapterOf(ex.type ?? type).group === 'F' && ex.pictureItems && ex.pictureItems.length > 0 && (
-                  <div className="rb-pictures-grid" style={{ marginTop: 12 }}>
+                  <div
+                    className="rb-pictures-grid"
+                    style={{
+                      marginTop: 12,
+                      gridTemplateColumns: `repeat(${Number(ex.options?.imagesPerRow ?? 4)}, minmax(0, 1fr))`,
+                      '--picture-height': `${Number(ex.options?.imageSize ?? 40)}mm`,
+                    } as CSSProperties}
+                  >
                     {ex.pictureItems.map((pic, pIdx) => (
                       <div
                         key={pIdx}
@@ -2807,8 +2895,8 @@ export default function App() {
                             </>
                           )}
                         </div>
-                        <div className="rb-picture-label">{pic.label}</div>
-                        <div
+                        {ex.options?.imageLabel !== false && <div className="rb-picture-label">{pic.label}</div>}
+                        {ex.options?.caption !== false && <div
                           className="rb-picture-caption"
                           contentEditable={!previewMode}
                           suppressContentEditableWarning
@@ -2816,7 +2904,7 @@ export default function App() {
                           onInput={dirty}
                         >
                           {pic.caption}
-                        </div>
+                        </div>}
                         <div style={{ marginTop: 6, fontSize: 11, color: '#64748b', fontStyle: 'italic' }}>
                           {pic.matchingPrompt}
                         </div>
@@ -2829,7 +2917,7 @@ export default function App() {
                 {adapterOf(ex.type ?? type).group === 'G' && ex.tableData && (
                   <div className="rb-table-wrap" style={{ marginTop: 12 }}>
                     <table className="rb-exercise-table">
-                      {ex.tableData.headers && (
+                      {ex.tableData.headers && ex.options?.headerRow !== false && (
                         <thead>
                           <tr>
                             {ex.tableData.headers.map((h, hIdx) => (
@@ -2857,7 +2945,9 @@ export default function App() {
                                 onBeforeInput={pushHistory}
                                 onInput={dirty}
                               >
-                                {cell}
+                                {ex.options?.cellBlank === true
+                                  ? <span dangerouslySetInnerHTML={{ __html: escapeHtml(cell).replace(/\[_{3,}\]/g, '<span class="rb-cell-blank"></span>') }} />
+                                  : cell}
                               </td>
                             ))}
                           </tr>
@@ -2871,17 +2961,17 @@ export default function App() {
                 {adapterOf(ex.type ?? type).group === 'H' && ex.sentenceItems && ex.sentenceItems.length > 0 && (
                   <div className="rb-sentences-wrap" style={{ marginTop: 12 }}>
                     {ex.sentenceItems.map((item, sIdx) => (
-                      <div key={sIdx} className="rb-sentence-item">
+                      <div key={sIdx} className={`rb-sentence-item${ex.options?.blockStyle === 'Danh sách' ? ' list-style' : ''}`}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <span style={{ fontWeight: 700, color: '#1e3a8a', fontSize: 13 }}>{item.number}.</span>
                           {item.jumbledWords.split(/\s*\/\s*/).map((word, wIdx) => (
                             <span key={wIdx} className="rb-word-chip">{word}</span>
                           ))}
-                          {item.hintInParentheses && (
+                          {item.hintInParentheses && ex.options?.hintParen !== false && (
                             <span style={{ fontSize: 11.5, color: '#64748b', fontStyle: 'italic' }}>({item.hintInParentheses})</span>
                           )}
                         </div>
-                        <div
+                        {ex.options?.answerLine !== false && <div
                           className="rb-sentence-line"
                           contentEditable={!previewMode}
                           suppressContentEditableWarning
@@ -2889,7 +2979,7 @@ export default function App() {
                           onInput={dirty}
                         >
                           ....................................................................................................................................................................
-                        </div>
+                        </div>}
                       </div>
                     ))}
                   </div>
@@ -2948,7 +3038,7 @@ export default function App() {
               replacement.src = src;
               replacement.alt = file.name;
             } else {
-              document.execCommand('insertHTML', false, `<img class="img inserted-image" src="${src}" alt="${file.name.replace(/["<>]/g, '')}" style="width:55mm;height:auto" />`);
+              insertHtmlAtCursor(`<img class="img inserted-image" src="${src}" alt="${file.name.replace(/["<>]/g, '')}" style="width:55mm;height:auto" />`);
             }
             replacePictureRef.current = false;
             dirty();
@@ -2964,10 +3054,13 @@ export default function App() {
         <Popover anchor={menu} onClose={() => setMenu(null)}>
           <ContextMenu items={menu.items} onPick={(item) => {
             setMenu(null);
-            const command = { Cut: 'cut', Copy: 'copy', Paste: 'paste', 'Clear formatting': 'clearFormat' }[item];
+            const command = {
+              Cut: 'cut', Copy: 'copy', Paste: 'paste', 'Clear formatting': 'clearFormat',
+              'Replace picture': 'replacePicture', 'Wrap text': 'picWrap', 'Remove picture': 'removePicture',
+            }[item];
             if (command) run(command);
             else if (tableRef.current?.pick(item)) return;
-            else say(`${item} – giao diện, chưa nối`);
+            else say(`${item}: thao tác không khả dụng trong ngữ cảnh hiện tại.`);
           }} />
         </Popover>
       )}

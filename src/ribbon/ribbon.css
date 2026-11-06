@@ -262,7 +262,7 @@
   .titlebar, .devbar, .rb-root, .left, .rb-mini, .toast, .rb-pop, .rb-modal-backdrop { display: none !important; }
   .work { padding: 0 !important; margin: 0 !important; display: block !important; }
   .stage { background: transparent !important; padding: 0 !important; border: none !important; overflow: visible !important; }
-  .page { box-shadow: none !important; margin: 0 auto !important; width: 100% !important; padding: 10mm 15mm !important; transform: none !important; }
+  .page { box-shadow: none !important; margin: 0 auto !important; transform: none !important; }
 }
 
 /* Form inputs & Exercise modals */

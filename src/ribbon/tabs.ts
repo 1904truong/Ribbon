@@ -89,11 +89,11 @@ export const groupsOf = (tab: TabId, a: ExerciseAdapter): RibbonGroup[] => {
       const g = a.group;
       const groupButtons = EXERCISE_BUTTONS[g] ?? [];
       const settingRows = SETTINGS[g] ?? [];
-      const settingItems: RibbonItem[] = settingRows.map(([sId, sLabel, sKind, sVal, sStatus]) => {
+      const settingItems: RibbonItem[] = settingRows.map(([sId, sLabel, sKind, sVal]) => {
         if (sKind === 'n') {
-          return num(sId, sLabel, typeof sVal === 'number' ? sVal : 28, sStatus, { inline: true });
+          return num(sId, sLabel, typeof sVal === 'number' ? sVal : 28, 'ok', { inline: true });
         }
-        return sel(sId, sLabel, Array.isArray(sVal) ? sVal : ['Có', 'Không'], sStatus, { labelled: true });
+        return sel(sId, sLabel, Array.isArray(sVal) ? sVal : ['Có', 'Không'], 'ok', { labelled: true });
       });
 
       return [
@@ -107,8 +107,8 @@ export const groupsOf = (tab: TabId, a: ExerciseAdapter): RibbonGroup[] => {
           nowrap: true,
           items: [
             big('smartPaste', 'Smart Paste', 'smartPaste', 'ok', { tip: 'Dán cả đề bài, tự động tách nội dung theo dạng bài' }),
-            big('smartAi', 'Smart AI', 'smartAi', 'ok', { tip: 'Soạn thêm câu hỏi / nội dung mới bằng AI' }),
-            big('aiRewrite', 'AI Rewrite', 'aiRewrite', 'ok', { tip: 'Viết lại đề bài / đoạn văn theo độ khó hoặc chủ đề mới' }),
+            big('smartAi', 'Smart AI', 'smartAi', 'todo', { tip: 'Soạn thêm câu hỏi / nội dung mới bằng AI', disabledWhen: () => 'Chưa cấu hình workflow/API cho Smart AI' }),
+            big('aiRewrite', 'AI Rewrite', 'aiRewrite', 'todo', { tip: 'Viết lại đề bài / đoạn văn theo độ khó hoặc chủ đề mới', disabledWhen: () => 'Chưa cấu hình workflow/API cho AI Rewrite' }),
             big('insertExercise', 'Insert exercise', 'insertExercise', 'ok', { tip: 'Lưu bài hiện tại và tạo thêm một bài tập mới (+)' }),
           ],
         },
@@ -127,8 +127,8 @@ export const groupsOf = (tab: TabId, a: ExerciseAdapter): RibbonGroup[] => {
           items: [
             big('addAudio', 'Add Audio', 'addAudio', 'ok'),
             big('recordAudio', 'Record Audio', 'recordAudio', 'ok'),
-            big('audioLibrary', 'Audio Library', 'audioLibrary', 'ok'),
-            big('trimAudio', 'Trim Audio', 'trimAudio', 'ok', { disabledWhen: () => 'Chưa tích hợp waveform/audio encoder để cắt file thật' }),
+            big('audioLibrary', 'Audio Library', 'audioLibrary', 'partial'),
+            big('trimAudio', 'Trim Audio', 'trimAudio', 'todo', { disabledWhen: () => 'Chưa tích hợp waveform/audio encoder để cắt file thật' }),
           ],
         }] : []),
         {
@@ -160,16 +160,16 @@ export const groupsOf = (tab: TabId, a: ExerciseAdapter): RibbonGroup[] => {
     }
 
     case 'Insert': return [
-      { name: 'Pages', nowrap: true, items: [big('pageBreak', 'Page break', 'insPageBreak', 'partial'), big('blankPage', 'Blank page', 'insBlankPage', 'todo')] },
-      { name: 'Tables', nowrap: true, items: [big('table', 'Table', 'insTable', 'partial', { popover: 'table-grid' })] },
+      { name: 'Pages', nowrap: true, items: [big('pageBreak', 'Page break', 'insPageBreak', 'ok'), big('blankPage', 'Blank page', 'insBlankPage', 'ok')] },
+      { name: 'Tables', nowrap: true, items: [big('table', 'Table', 'insTable', 'ok', { popover: 'table-grid' })] },
       { name: 'Illustrations', nowrap: true, items: [
-        big('pictureFile', 'Picture (from device)', 'insPicture', 'ok', { disabledWhen: noImage }), big('aiImage', 'AI image', 'insAiImage', 'ok', { disabledWhen: () => 'Chưa cấu hình dịch vụ tạo ảnh AI' }),
-        big('gallery', 'Gallery', 'insGallery', 'ok', { disabledWhen: (x) => !x.capabilities.gallery && 'Chỉ dùng cho Matching Pictures' }), big('shapes', 'Shapes', 'insShapes', 'partial'),
+        big('pictureFile', 'Picture (from device)', 'insPicture', 'ok', { disabledWhen: noImage }), big('aiImage', 'AI image', 'insAiImage', 'todo', { disabledWhen: () => 'Chưa cấu hình dịch vụ tạo ảnh AI' }),
+        big('gallery', 'Gallery', 'insGallery', 'ok', { disabledWhen: (x) => !x.capabilities.gallery && 'Chỉ dùng cho Matching Pictures' }), big('shapes', 'Shapes', 'insShapes', 'ok'),
       ] },
       { name: 'Exercise objects', nowrap: true, items: [big('blankObject', 'Blank (a)___', 'insBlank', 'ok', { disabledWhen: noBlank }), big('qr', 'QR code', 'insQr', 'ok', { disabledWhen: noQr }), big('audio', 'Audio', 'insAudio', 'ok', { disabledWhen: noAudio })] },
-      { name: 'Header & Footer', nowrap: true, items: [big('header', 'Header', 'insHeader', 'partial'), big('footer', 'Footer', 'insFooter', 'partial'), big('pageNumber', 'Page number', 'insPageNumber', 'todo')] },
-      { name: 'Text', nowrap: true, items: [big('textBox', 'Text box', 'insTextBox', 'partial'), big('hline', 'Horizontal line', 'insHline', 'partial'), big('link', 'Link', 'insLink', 'todo')] },
-      { name: 'Symbols', nowrap: true, items: [big('symbol', 'Symbol', 'insSymbol', 'todo')] },
+      { name: 'Header & Footer', nowrap: true, items: [big('header', 'Header', 'insHeader', 'ok'), big('footer', 'Footer', 'insFooter', 'ok'), big('pageNumber', 'Page number', 'insPageNumber', 'ok')] },
+      { name: 'Text', nowrap: true, items: [big('textBox', 'Text box', 'insTextBox', 'ok'), big('hline', 'Horizontal line', 'insHline', 'ok'), big('link', 'Link', 'insLink', 'ok')] },
+      { name: 'Symbols', nowrap: true, items: [big('symbol', 'Symbol', 'insSymbol', 'ok')] },
     ];
 
     case 'Design': return [
@@ -178,41 +178,41 @@ export const groupsOf = (tab: TabId, a: ExerciseAdapter): RibbonGroup[] => {
         sel('docLineHeight', 'Paragraph spacing', ['1.3', '1.5', '1.75', '2.0', '2.1'], 'ok', { labelled: true, width: 90 }),
         sel('headingSize', 'Heading size', ['11', '12', '12.5', '13', '14', '16'], 'ok', { labelled: true, width: 70 }),
         sel('bodySize', 'Body size', ['10', '10.5', '11', '12', '13', '14'], 'ok', { labelled: true, width: 70 }),
-        big('setDefault', 'Set as default', 'desDefault', 'todo'),
+        big('setDefault', 'Set as default', 'desDefault', 'ok'),
       ] },
       { name: 'Page Background', nowrap: true, items: [
-        big('pageBorders', 'Page borders', 'desBorders', 'todo', { chevron: true }), big('watermark', 'Watermark', 'desWatermark', 'todo', { chevron: true }), big('pageColor', 'Page color', 'desPageColor', 'todo', { chevron: true }),
+        big('pageBorders', 'Page borders', 'desBorders', 'ok', { chevron: true }), big('watermark', 'Watermark', 'desWatermark', 'ok', { chevron: true }), big('pageColor', 'Page color', 'desPageColor', 'ok', { chevron: true }),
       ] },
       { name: 'Branding', nowrap: true, items: [big('branding', 'Header / footer thương hiệu', 'desBranding', 'ok', { chevron: true })] },
     ];
 
     case 'Layout': return [
       { name: 'Page Setup', nowrap: true, items: [
-        big('margins', 'Margins', 'layMargins', 'todo', { chevron: true }), big('orientation', 'Orientation', 'layOrientation', 'todo', { chevron: true }),
-        big('paperSize', 'Size', 'laySize', 'todo', { chevron: true }), big('columns', 'Columns', 'layColumns', 'partial', { chevron: true }),
+        big('margins', 'Margins', 'layMargins', 'ok', { chevron: true }), big('orientation', 'Orientation', 'layOrientation', 'ok', { chevron: true }),
+        big('paperSize', 'Size', 'laySize', 'ok', { chevron: true }), big('columns', 'Columns', 'layColumns', 'ok', { chevron: true }),
       ] },
-      { name: 'Breaks', nowrap: true, items: [big('pageBreak', 'Page Break', 'layPageBreak', 'partial'), big('columnBreak', 'Column Break', 'layColumnBreak', 'todo'), big('sectionBreak', 'Section Break', 'laySectionBreak', 'todo')] },
+      { name: 'Breaks', nowrap: true, items: [big('pageBreak', 'Page Break', 'layPageBreak', 'ok'), big('columnBreak', 'Column Break', 'layColumnBreak', 'ok'), big('sectionBreak', 'Section Break', 'laySectionBreak', 'ok')] },
       { name: 'Indent', nowrap: true, items: [{ kind: 'stack', items: [
-        num('indentLeft', 'Left:', 0, 'todo', { inline: true, icon: 'layIndentLeft', unit: 'cm' }), num('indentRight', 'Right:', 0, 'todo', { inline: true, icon: 'layIndentRight', unit: 'cm' }),
+        num('indentLeft', 'Left:', 0, 'ok', { inline: true, icon: 'layIndentLeft', unit: 'cm' }), num('indentRight', 'Right:', 0, 'ok', { inline: true, icon: 'layIndentRight', unit: 'cm' }),
       ] }] },
       { name: 'Spacing', nowrap: true, items: [{ kind: 'stack', items: [
-        num('spaceBefore', 'Before:', 0, 'todo', { inline: true, icon: 'laySpaceBefore', unit: 'pt' }), num('spaceAfter', 'After:', 0, 'todo', { inline: true, icon: 'laySpaceAfter', unit: 'pt' }),
+        num('spaceBefore', 'Before:', 0, 'ok', { inline: true, icon: 'laySpaceBefore', unit: 'pt' }), num('spaceAfter', 'After:', 0, 'ok', { inline: true, icon: 'laySpaceAfter', unit: 'pt' }),
       ] }] },
       { name: 'Arrange', nowrap: true, items: [
-        big('position', 'Position', 'layPosition', 'todo', { need: image, chevron: true }), big('wrap', 'Wrap Text', 'layWrap', 'todo', { need: image, chevron: true }),
-        big('forward', 'Bring Forward', 'layForward', 'todo', { need: image, chevron: true }), big('backward', 'Send Backward', 'layBackward', 'todo', { need: image, chevron: true }), SEP,
-        big('align', 'Align', 'layAlign', 'todo', { need: image, chevron: true }), big('group', 'Group', 'layGroup', 'todo', { need: image, disabledWhen: () => 'Document model chỉ hỗ trợ chọn một đối tượng; Group được khóa để tránh báo thành công giả' }), big('rotate', 'Rotate', 'layRotate', 'todo', { need: image, chevron: true }),
+        big('position', 'Position', 'layPosition', 'ok', { need: image, chevron: true }), big('wrap', 'Wrap Text', 'layWrap', 'ok', { need: image, chevron: true }),
+        big('forward', 'Bring Forward', 'layForward', 'ok', { need: image, chevron: true }), big('backward', 'Send Backward', 'layBackward', 'ok', { need: image, chevron: true }), SEP,
+        big('align', 'Align', 'layAlign', 'ok', { need: image, chevron: true }), big('group', 'Group', 'layGroup', 'todo', { need: image, disabledWhen: () => 'Document model chỉ hỗ trợ chọn một đối tượng; Group được khóa để tránh báo thành công giả' }), big('rotate', 'Rotate', 'layRotate', 'ok', { need: image, chevron: true }),
       ] },
     ];
 
     case 'Review': return [
-      { name: 'Proofing', nowrap: true, items: [big('wordCount', 'Word count', '123', 'todo'), big('spelling', 'Spelling & grammar', 'abc✓', 'todo', { chevron: true })] },
+      { name: 'Proofing', nowrap: true, items: [big('wordCount', 'Word count', '123', 'ok'), big('spelling', 'Spelling & grammar', 'abc✓', 'ok', { chevron: true })] },
       { name: 'Speech', nowrap: true, items: [
-        big('readAloud', 'Read aloud', 'revReadAloud', 'ok', { chevron: true, menu: [{ label: 'Play / Resume', value: 'readAloud' }, { label: 'Pause', value: 'pauseReadAloud' }, { label: 'Stop', value: 'stopReadAloud' }] }), big('tts', 'Generate audio (TTS)', 'revTts', 'ok', { chevron: true, disabledWhen: () => 'Chưa cấu hình dịch vụ TTS để tạo file audio' }),
+        big('readAloud', 'Read aloud', 'revReadAloud', 'ok', { chevron: true, menu: [{ label: 'Play / Resume', value: 'readAloud' }, { label: 'Pause', value: 'pauseReadAloud' }, { label: 'Stop', value: 'stopReadAloud' }] }), big('tts', 'Generate audio (TTS)', 'revTts', 'todo', { chevron: true, disabledWhen: () => 'Chưa cấu hình dịch vụ TTS để tạo file audio' }),
       ] },
       { name: 'Review Tools', nowrap: true, items: [
-        big('newComment', 'New comment', 'revNewComment', 'todo'), big('deleteComment', 'Delete', 'revDeleteComment', 'todo', { chevron: true }),
-        big('prevComment', 'Previous', 'revPrevious', 'todo'), big('nextComment', 'Next', 'revNext', 'todo'), SEP, big('trackChanges', 'Track changes', 'revTrack', 'todo', { chevron: true }),
+        big('newComment', 'New comment', 'revNewComment', 'ok'), big('deleteComment', 'Delete', 'revDeleteComment', 'ok', { chevron: true }),
+        big('prevComment', 'Previous', 'revPrevious', 'ok'), big('nextComment', 'Next', 'revNext', 'ok'), SEP, big('trackChanges', 'Track changes', 'revTrack', 'ok', { chevron: true }),
       ] },
     ];
 
@@ -220,25 +220,25 @@ export const groupsOf = (tab: TabId, a: ExerciseAdapter): RibbonGroup[] => {
       { name: 'Views', nowrap: true, items: [
         big('editMode', 'Edit mode', 'vwEdit', 'ok', { active: (st) => !st.previewMode }), big('preview', 'Preview', 'vwPreview', 'ok', { active: (st) => st.previewMode }),
       ] },
-      { name: 'Show', nowrap: true, items: [big('ruler', 'Ruler', 'vwRuler', 'todo'), big('gridlines', 'Gridlines', 'vwGrid', 'todo'), big('navPane', 'Navigation pane', 'vwNav', 'todo')] },
+      { name: 'Show', nowrap: true, items: [big('ruler', 'Ruler', 'vwRuler', 'ok'), big('gridlines', 'Gridlines', 'vwGrid', 'ok'), big('navPane', 'Navigation pane', 'vwNav', 'ok')] },
       { name: 'Zoom', nowrap: true, items: [
         sel('zoom', 'Zoom', ['50%', '75%', '100%', '125%', '150%'], 'ok', { value: '100%', width: 70 }), SEP,
-        big('zoom100', '100%', '1:1', 'ok'), big('onePage', 'One page', 'vwOnePage', 'ok'), big('pageWidth', 'Page width', 'vwPageWidth', 'todo'), big('multiPages', 'Multiple pages', 'vwMulti', 'todo'),
+        big('zoom100', '100%', '1:1', 'ok'), big('onePage', 'One page', 'vwOnePage', 'ok'), big('pageWidth', 'Page width', 'vwPageWidth', 'ok'), big('multiPages', 'Multiple pages', 'vwMulti', 'ok'),
       ] },
-      { name: 'Window', nowrap: true, items: [big('newWindow', 'New window', 'vwNewWindow', 'todo'), big('arrangeAll', 'Arrange all', 'vwArrange', 'todo', { disabledWhen: () => 'Trình duyệt không cho phép ứng dụng tự sắp xếp cửa sổ hệ điều hành' }), big('split', 'Split', 'vwSplit', 'todo')] },
+      { name: 'Window', nowrap: true, items: [big('newWindow', 'New window', 'vwNewWindow', 'ok'), big('arrangeAll', 'Arrange all', 'vwArrange', 'todo', { disabledWhen: () => 'Trình duyệt không cho phép ứng dụng tự sắp xếp cửa sổ hệ điều hành' }), big('split', 'Split', 'vwSplit', 'ok')] },
     ];
 
     case 'Help': return [
       { name: 'Help', nowrap: true, items: [
-        big('help', 'Help & Guide', 'hlpGuide', 'ok', { tip: 'Mở hướng dẫn sử dụng (F1)' }), big('shortcuts', 'Keyboard shortcuts', 'hlpShortcuts', 'ok', { tip: 'Xem các phím tắt đang hoạt động (Ctrl+/)' }), big('feedback', 'Feedback', 'hlpFeedback', 'ok', { tip: 'Báo lỗi hoặc đề xuất cải tiến' }),
+        big('help', 'Help & Guide', 'hlpGuide', 'ok', { tip: 'Mở hướng dẫn sử dụng (F1)' }), big('shortcuts', 'Keyboard shortcuts', 'hlpShortcuts', 'ok', { tip: 'Xem các phím tắt đang hoạt động (Ctrl+/)' }), big('feedback', 'Feedback', 'hlpFeedback', 'partial', { tip: 'Lưu phản hồi cục bộ; chưa có API gửi về Flow Bridge Studio' }),
       ] },
     ];
 
     case 'Picture Format': return [
-      { name: 'Adjust', items: [big('replacePicture', 'Replace picture', '⇄', 'partial'), big('regenAi', 'Regenerate AI image', '✨', 'ok', { disabledWhen: () => 'Ảnh hiện tại không có workflow AI đã cấu hình' }), big('removePicture', 'Remove picture', '🗑', 'ok')] },
-      { name: 'Size', items: [num('picWidth', 'Width (mm)', 55, 'todo', { labelled: true }), num('picHeight', 'Height (mm)', 40, 'todo', { labelled: true }), btn('lockRatio', 'Lock aspect ratio', '🔒', 'todo'), btn('resetRatio', 'Reset ratio', '↺', 'todo'), btn('fitWidth', 'Fit to page width', '↔', 'todo'), btn('crop', 'Crop', '⌗', 'todo')] },
-      { name: 'Arrange', items: [big('picWrap', 'Wrap text', '↯', 'todo'), big('picPosition', 'Position', '⌖', 'todo'), big('picAlign', 'Align', '⫶', 'todo'), big('picForward', 'Bring forward', '⬒', 'todo'), big('picBackward', 'Send backward', '⬓', 'todo')] },
-      { name: 'Style', items: [big('picBorder', 'Border', '▢', 'todo'), big('picShadow', 'Shadow', '◪', 'todo'), big('altText', 'Alt text', 'Alt', 'todo')] },
+      { name: 'Adjust', items: [big('replacePicture', 'Replace picture', '⇄', 'ok'), big('regenAi', 'Regenerate AI image', '✨', 'todo', { disabledWhen: () => 'Ảnh hiện tại không có workflow AI đã cấu hình' }), big('removePicture', 'Remove picture', '🗑', 'ok')] },
+      { name: 'Size', items: [num('picWidth', 'Width (mm)', 55, 'ok', { labelled: true }), num('picHeight', 'Height (mm)', 40, 'ok', { labelled: true }), btn('lockRatio', 'Lock aspect ratio', '🔒', 'ok'), btn('resetRatio', 'Reset ratio', '↺', 'ok'), btn('fitWidth', 'Fit to page width', '↔', 'ok'), btn('crop', 'Crop', '⌗', 'ok')] },
+      { name: 'Arrange', items: [big('picWrap', 'Wrap text', '↯', 'ok'), big('picPosition', 'Position', '⌖', 'ok'), big('picAlign', 'Align', '⫶', 'ok'), big('picForward', 'Bring forward', '⬒', 'ok'), big('picBackward', 'Send backward', '⬓', 'ok')] },
+      { name: 'Style', items: [big('picBorder', 'Border', '▢', 'ok'), big('picShadow', 'Shadow', '◪', 'ok'), big('altText', 'Alt text', 'Alt', 'ok')] },
     ];
 
     case 'Table Design': return [
